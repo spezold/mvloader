@@ -15,36 +15,36 @@ class Volume:
     """
     Volume(src_voxel_data, src_transformation, src_system, system="RAS", src_object=None)
 
-    Return an object that represents 3D image volumes in a desired anatomical world coordinate system (`system`;
-    default is "RAS"), based on (1) an array that holds the voxels (`src_voxel_data`) and (2) a transformation matrix
-    (`src_transformation`) that holds the mapping from voxel indices to (3) some potentially different given
-    anatomical world coordinate system (`src_system`). The class is meant to serve as a layer on top of specific
+    Return an object that represents 3D image volumes in a desired anatomical world coordinate system (``system``;
+    default is "RAS"), based on (1) an array that holds the voxels (``src_voxel_data``) and (2) a transformation matrix
+    (``src_transformation``) that holds the mapping from voxel indices to (3) some potentially different given
+    anatomical world coordinate system (``src_system``). The class is meant to serve as a layer on top of specific
     image formats (with different coordinate system conventions).
 
     It is also meant to make dealing with the voxel data a little simpler: when accessing voxels via the field
-    `aligned_volume`, the voxel data axes are aligned with the anatomical world coordinate system axes as closely as
+    ``aligned_volume``, the voxel data axes are aligned with the anatomical world coordinate system axes as closely as
     is possible without reinterpolating the image.
 
     Parameters
     ----------
     src_voxel_data : array_like
         A three-dimensional array that contains the image voxels, arranged to match the coordinate transformation
-        matrix `src_transformation`.
+        matrix ``src_transformation``.
     src_transformation : array_like
-        A :math:`4x4` matrix that describes the mapping from voxel indices in `src_voxel_data` to a given anatomical
-        world coordinate system (`src_system`).
+        A :math:`4x4` matrix that describes the mapping from voxel indices in ``src_voxel_data`` to a given anatomical
+        world coordinate system (``src_system``).
     src_system : str
         A three-character string that describes the anatomical world coordinate system for the provided
-        `src_transformation` matrix. Any permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used. For
+        ``src_transformation`` matrix. Any permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used. For
         example, for voxels and a transformation matrix provided by a DICOM loading library, this should usually be
         "LPS", as this is the assumed world coordinate system of the DICOM standard.
     system : str, optional
-        A three-character string similar to `src_system`. However, `system` should describe the anatomical world
+        A three-character string similar to ``src_system``. However, ``system`` should describe the anatomical world
         coordinate system that the *user* assumes/desires. It will also determine the arrangement of the voxel data for
-        the `aligned_volume` representation (default: "RAS").
+        the ``aligned_volume`` representation (default: "RAS").
     src_object : object, optional
         The original object that was created by the image loading library (nibabel, pydicom, ...) to get the provided
-        `src_voxel_data` and `src_transformation` -- for debugging, for example (default: None).
+        ``src_voxel_data`` and ``src_transformation`` -- for debugging, for example (default: None).
     """
 
     def __init__(self, src_voxel_data, src_transformation, src_system, system="RAS", src_object=None):
@@ -52,25 +52,26 @@ class Volume:
         self.__src_system = src_system
         self.__user_system = None
 
-        # Mapping from `src_volume`'s voxel indices to the source anatomical coordinate system (4x4 matrix)
+        # Mapping from ``src_volume``'s voxel indices to the source anatomical coordinate system (4x4 matrix)
         self.__vsrc2csrc = src_transformation
 
         self.__src_object = src_object
-        self.__src_spacing = None  # Voxel spacing for `src_volume`
+        self.__src_spacing = None  # Voxel spacing for ``src_volume``
         self.__src_volume = src_voxel_data  # The source voxel data
-        self.__vsrc2cuser = None  # Mapping from `src_volume`'s voxel indices to the user's anatomical coordinate system
+        self.__vsrc2cuser = None
+        # ^ Mapping from ``src_volume``'s voxel indices to the desired anatomical coordinate system
 
         self.__aligned_spacing = None
         self.__aligned_volume = None
         self.__vuser2cuser = None
-        # ^ Mapping from `aligned_volume`'s voxel indices to the user's anatomical coordinate system
+        # ^ Mapping from ``aligned_volume``'s voxel indices to the desired anatomical coordinate system
 
         # Mapping from the source anatomical coordinate system to the user's anatomical coordinate system and vice
         # versa (3x3; only the permutation-reflection matrices)
         self.__csrc2cuser = None
         self.__cuser2csrc = None
 
-        # Mapping from `src_volume` voxel indices to `aligned_volume` voxel indices and vice versa (4x4; including
+        # Mapping from ``src_volume`` voxel indices to ``aligned_volume`` voxel indices and vice versa (4x4; including
         # offset into the array)
         self.__vsrc2vuser = None
         self.__vuser2vsrc = None
@@ -90,8 +91,8 @@ class Volume:
     @system.setter
     def system(self, value):
         """
-        Set the desired anatomical world coordinate system to the given system. Fields like `aligned_volume` and
-        `aligned_spacing` will be adjusted accordingly.
+        Set the desired anatomical world coordinate system to the given system. Fields like ``aligned_volume`` and
+        ``aligned_spacing`` will be adjusted accordingly.
 
         Parameters
         ----------
@@ -116,13 +117,13 @@ class Volume:
 
     def __init_aligned_volume(self):
         """
-        Calculate `aligned_volume`: swap the `src_volume` to match the currently desired anatomical world coordinate
-        system `user_system`. Also calculate the voxel swapping matrices in the process.
+        Calculate ``aligned_volume``: swap the ``src_volume`` to match the currently desired anatomical world coordinate
+        system ``user_system``. Also calculate the voxel swapping matrices in the process.
         """
         ndim = 3
 
         # First map the voxels to lie parallel to the *original* coordinate system's axes, then map to the *desired*
-        # coordinate system. This results in the mapping from the `src_volume` voxel coordinates to `aligned_volume`
+        # coordinate system. This results in the mapping from the ``src_volume`` voxel coordinates to ``aligned_volume``
         # voxel coordinates (3x3)
         perm = anatomical_coords.find_closest_permutation_matrix(self.__vsrc2csrc[:ndim, :ndim])
         vsrc2vuser3 = self.__csrc2cuser @ perm
@@ -145,15 +146,16 @@ class Volume:
 
     def __init_voxel_mapping(self):
         """
-        Calculate `vsrc2cuser` and `vuser2cuser`, i.e. the mappings from `src_volume`'s and `aligned_volume`'s voxel
-        indices to the currently desired anatomical world coordinate system `system`.
+        Calculate ``vsrc2cuser`` and ``vuser2cuser``, i.e. the mappings from ``src_volume``'s and ``aligned_volume``'s
+        voxel indices to the currently desired anatomical world coordinate system ``system``.
         """
         self.__vsrc2cuser = self.get_src_matrix(system=self.__user_system)
         self.__vuser2cuser = self.get_aligned_matrix(system=self.__user_system)
 
     def __init_spacing(self):
         """
-        Calculate `src_spacing` and `aligned_spacing`, i.e. the voxel spacings for `src_volume` and `aligned_volume`.
+        Calculate ``src_spacing`` and ``aligned_spacing``, i.e. the voxel spacings for ``src_volume`` and
+        ``aligned_volume``.
         """
         m = self.__vsrc2csrc
         self.__src_spacing = tuple(np.linalg.norm(m[0:3], axis=0))
@@ -186,8 +188,8 @@ class Volume:
         Returns
         -------
         ndarray
-            The :math:`4x4` transformation matrix that maps from `src_volume`'s voxel indices to the desired anatomical
-            world coordinate system `system`.
+            The :math:`4x4` transformation matrix that maps from ``src_volume``'s voxel indices to the desired
+            anatomical world coordinate system ``system``.
         """
         return self.__vsrc2cuser
 
@@ -197,8 +199,8 @@ class Volume:
         Returns
         -------
         ndarray
-            The :math:`4x4` transformation matrix that maps from `aligned_volume`'s voxel indices to the desired
-            anatomical world coordinate system `system`.
+            The :math:`4x4` transformation matrix that maps from ``aligned_volume``'s voxel indices to the desired
+            anatomical world coordinate system ``system``.
         """
         return self.__vuser2cuser
 
@@ -219,8 +221,8 @@ class Volume:
         -------
         ndarray
             The 3-dimensional Numpy array that contains the image information with the voxel data axes aligned to the
-            desired anatomical world coordinate system `system` as closely as is possible without reinterpolation.
-            This means, for example, if `system` is "RAS", then `aligned_volume` will hold an array where increasing
+            desired anatomical world coordinate system ``system`` as closely as is possible without reinterpolation.
+            This means, for example, if ``system`` is "RAS", then ``aligned_volume`` will hold an array where increasing
             the index on axis 0 will reach a voxel coordinate that is typically more to the right side of the imaged
             subject, increasing the index on axis 1 will reach a voxel coordinate that is more anterior,
             and increasing the index on axis 2 will reach a voxel coordinate that is more superior.
@@ -233,7 +235,7 @@ class Volume:
         Returns
         -------
         tuple
-            The spacing of `src_volume` as a three-tuple in world coordinate system units per voxel.
+            The spacing of ``src_volume`` as a three-tuple in world coordinate system units per voxel.
         """
         return self.__src_spacing
 
@@ -243,38 +245,13 @@ class Volume:
         Returns
         -------
         tuple
-            The spacing of `aligned_volume` as a three-tuple in world coordinate system units per voxel.
+            The spacing of ``aligned_volume`` as a three-tuple in world coordinate system units per voxel.
         """
         return self.__aligned_spacing
 
     def get_src_matrix(self, system):
         """
-        Get a transformation matrix that maps from `src_volume`'s voxel indices to the given anatomical world coordinate
-        system.
-
-        Parameters
-        ----------
-        system : str
-            A three-character string that describes the anatomical world coordinate system. Any permutation of {A,P},
-            {I,S}, {L,R} (case-insensitive) can be used.
-
-        Returns
-        -------
-        ndarray
-            The resulting :math:`4x4` transformation matrix.
-
-        See also
-        --------
-        get_aligned_matrix : Same transformation, but for `aligned_volume`.
-        """
-        csrc2csys = np.eye(4)
-        csrc2csys[:-1, :-1] = anatomical_coords.matrix(self.__src_system, system)[0]
-        result = csrc2csys @ self.__vsrc2csrc
-        return result
-
-    def get_aligned_matrix(self, system):
-        """
-        Get a transformation matrix that maps from `aligned_volume`'s voxel indices to the given anatomical world
+        Get a transformation matrix that maps from ``src_volume``'s voxel indices to the given anatomical world
         coordinate system.
 
         Parameters
@@ -290,7 +267,32 @@ class Volume:
 
         See also
         --------
-        get_src_matrix : Same transformation, but for `src_volume`.
+        get_aligned_matrix : Same transformation, but for ``aligned_volume``.
+        """
+        csrc2csys = np.eye(4)
+        csrc2csys[:-1, :-1] = anatomical_coords.matrix(self.__src_system, system)[0]
+        result = csrc2csys @ self.__vsrc2csrc
+        return result
+
+    def get_aligned_matrix(self, system):
+        """
+        Get a transformation matrix that maps from ``aligned_volume``'s voxel indices to the given anatomical world
+        coordinate system.
+
+        Parameters
+        ----------
+        system : str
+            A three-character string that describes the anatomical world coordinate system. Any permutation of {A,P},
+            {I,S}, {L,R} (case-insensitive) can be used.
+
+        Returns
+        -------
+        ndarray
+            The resulting :math:`4x4` transformation matrix.
+
+        See also
+        --------
+        get_src_matrix : Same transformation, but for ``src_volume``.
         """
         vsrc2csys = self.get_src_matrix(system=system)
         result = vsrc2csys @ self.__vuser2vsrc

@@ -13,7 +13,7 @@ setup(
     url="https://github.com/spezold/mvloader",
     packages=["mvloader"],
     license="MIT License",
-    python_requires='>=3',
+    python_requires='>=3.5',
     install_requires=["nibabel", "pydicom", "pynrrd", "numpy"],
     classifiers=[
         'Development Status :: 3 - Alpha',

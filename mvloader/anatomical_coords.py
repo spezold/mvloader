@@ -176,7 +176,7 @@ def opposites():
     """
     Create a dictionary that for every uppercase letter defining an anatomical direction, when given as a key, will
     return an uppercase letter that marks the opposite direction in the same anatomical axis. As an example,
-    `opposites()["R"]` will give `"L"`.
+    ``opposites()["R"]`` will give "L".
 
     Returns
     -------
