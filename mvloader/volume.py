@@ -15,10 +15,11 @@ class Volume:
     """
     Volume(src_voxel_data, src_transformation, src_system, system="RAS", src_object=None)
 
-    Returns an object that represents 3D scan volumes in a desired anatomical world coordinate system (default is
-    "RAS"), based on an array that holds the voxels and a transformation matrix that holds the mapping from voxel
-    indices to anatomical world coordinates. The class is meant to serve as a layer on top of specific image formats
-    (with different coordinate system conventions).
+    Return an object that represents 3D image volumes in a desired anatomical world coordinate system (`system`;
+    default is "RAS"), based on (1) an array that holds the voxels (`src_voxel_data`) and (2) a transformation matrix
+    (`src_transformation`) that holds the mapping from voxel indices to (3) some potentially different given
+    anatomical world coordinate system (`src_system`). The class is meant to serve as a layer on top of specific
+    image formats (with different coordinate system conventions).
 
     It is also meant to make dealing with the voxel data a little simpler: when accessing voxels via the field
     `aligned_volume`, the voxel data axes are aligned with the anatomical world coordinate system axes as closely as
@@ -31,16 +32,16 @@ class Volume:
         matrix `src_transformation`.
     src_transformation : array_like
         A :math:`4x4` matrix that describes the mapping from voxel indices in `src_voxel_data` to a given anatomical
-        world coordinate system (which we call `src_system` here).
+        world coordinate system (`src_system`).
     src_system : str
         A three-character string that describes the anatomical world coordinate system for the provided
         `src_transformation` matrix. Any permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used. For
         example, for voxels and a transformation matrix provided by a DICOM loading library, this should usually be
         "LPS", as this is the assumed world coordinate system of the DICOM standard.
     system : str, optional
-        A three-character string similar to `src_system`. However, this should now describe the anatomical world
-        coordinate system that the *user* assumes and that will determine the arrangement of the voxel data for the
-        `aligned_volume` representation (default: "RAS").
+        A three-character string similar to `src_system`. However, `system` should describe the anatomical world
+        coordinate system that the *user* assumes/desires. It will also determine the arrangement of the voxel data for
+        the `aligned_volume` representation (default: "RAS").
     src_object : object, optional
         The original object that was created by the image loading library (nibabel, pydicom, ...) to get the provided
         `src_voxel_data` and `src_transformation` -- for debugging, for example (default: None).
@@ -165,7 +166,7 @@ class Volume:
         Returns
         -------
         str
-            The source anatomical world coordinate system as a three-character string.
+            The original anatomical world coordinate system as a three-character string.
         """
         return self.__src_system
 
@@ -217,7 +218,7 @@ class Volume:
         Returns
         -------
         ndarray
-            The 3-dimensional Numpy array that contains the voxel data with the voxel data axes aligned to the
+            The 3-dimensional Numpy array that contains the image information with the voxel data axes aligned to the
             desired anatomical world coordinate system `system` as closely as is possible without reinterpolation.
             This means, for example, if `system` is "RAS", then `aligned_volume` will hold an array where increasing
             the index on axis 0 will reach a voxel coordinate that is typically more to the right side of the imaged
