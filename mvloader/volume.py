@@ -101,7 +101,7 @@ class Volume:
             permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used.
         """
         value = value.upper()
-        if value != self.__user_sytem:
+        if value != self.__user_system:
             self.__user_system = value
             self.__init_system_mapping()
             self.__init_aligned_volume()
@@ -157,10 +157,11 @@ class Volume:
         Calculate ``src_spacing`` and ``aligned_spacing``, i.e. the voxel spacings for ``src_volume`` and
         ``aligned_volume``.
         """
+        ndim = 3
         m = self.__vsrc2csrc
-        self.__src_spacing = tuple(np.linalg.norm(m[0:3], axis=0))
+        self.__src_spacing = tuple(np.linalg.norm(m[:ndim, :ndim], axis=0))
         m = self.__vuser2cuser
-        self.__aligned_spacing = tuple(np.linalg.norm(m[0:3], axis=0))
+        self.__aligned_spacing = tuple(np.linalg.norm(m[:ndim :ndim], axis=0))
 
     @property
     def src_system(self):

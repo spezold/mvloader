@@ -140,7 +140,7 @@ class SliceStacker:
         else:
             self.base_dir = str(path.parent)
             try:
-                dataset = dicom.read_file(path, stop_before_pixels=True)
+                dataset = dicom.read_file(str(path), stop_before_pixels=True)
                 self.si_uid = dataset[SliceStacker.SI_UID_TAG].value
             except:
                 pass
@@ -239,3 +239,8 @@ class SliceStacker:
         self.__sort_slices()
         
         return self
+
+
+if __name__ == "__main__":
+
+    open_stack("/home/simon/Data/20130604-PrismaTest/test2_20130603_0002_t2_spc_sag_p2_iso/test2_0002_000001.ima")
