@@ -161,7 +161,7 @@ class Volume:
         m = self.__vsrc2csrc
         self.__src_spacing = tuple(np.linalg.norm(m[:ndim, :ndim], axis=0))
         m = self.__vuser2cuser
-        self.__aligned_spacing = tuple(np.linalg.norm(m[:ndim :ndim], axis=0))
+        self.__aligned_spacing = tuple(np.linalg.norm(m[:ndim, :ndim], axis=0))
 
     @property
     def src_system(self):
