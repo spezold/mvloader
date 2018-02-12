@@ -82,12 +82,12 @@ def save_image(path, data, transformation):
 
 def __world_coordinate_system_from(header):
     """
-    From the given nrrd header, determine the respective assumed anatomical world coordinate system.
+    From the given NRRD header, determine the respective assumed anatomical world coordinate system.
 
     Parameters
     ----------
     header : dict
-        A dictionary containing the nrrd header (as returned by ``nrrd.read``, for example).
+        A dictionary containing the NRRD header (as returned by ``nrrd.read``, for example).
 
     Returns
     -------
@@ -110,9 +110,9 @@ def __world_coordinate_system_from(header):
         # We are lucky: this is already the format that we need
         return system_str.upper()
 
-    # We need to separate the string (such as "right-anterior-superior") at its dashes, then get the first character.
-    # We cannot handle 4D data nor data with scanner-based coordinates ("scanner-...") or non-anatomical coordinates
-    # ("3D-...")
+    # We need to separate the string (such as "right-anterior-superior") at its dashes, then get the first character
+    # of each component. We cannot handle 4D data nor data with scanner-based coordinates ("scanner-...") or
+    # non-anatomical coordinates ("3D-...")
     system_components = system_str.split("-")
     if len(system_components) == 3 and not system_components[0].lower() in ["scanner", "3d"]:
         system_str = "".join(c[0].upper() for c in system_components)
@@ -128,7 +128,7 @@ def __matrix_from(header):
     Parameters
     ----------
     header : dict
-        A dictionary containing the nrrd header (as returned by ``nrrd.read``, for example).
+        A dictionary containing the NRRD header (as returned by ``nrrd.read``, for example).
 
     Returns
     -------
@@ -142,7 +142,7 @@ def __matrix_from(header):
         raise IOError("Need the header's \"{}\" field to determine the mapping from voxels to world coordinates.".format(e))
 
     # "... the space directions field gives, one column at a time, the mapping from image space to world space
-    # coordinates ... [1]_"
+    # coordinates ... [1]_" -> list of columns, needs to be transposed
     trans_3x3 = np.array(space_directions).T
     trans_4x4 = np.eye(4)
     trans_4x4[:3, :3] = trans_3x3
