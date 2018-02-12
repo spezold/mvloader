@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+"""A module for reading NRRD files [1]_, basically a wrapper for calls on the pynrrd library [2]_.
+
+References
+----------
+.. [1] http://teem.sourceforge.net/nrrd/format.html (20180212)
+.. [2] https://github.com/mhe/pynrrd (20180212).
+"""
+
+import nrrd
+import numpy as np
+
+from mvloader.volume import Volume
+
+
+def open_image(path, verbose=True):
+    """
+    Open a 3D nrrd image at the given path.
+
+    Parameters
+    ----------
+    path : str
+        The path of the file to be loaded.
+    verbose : bool, optional
+        If `True` (default), print some meta data of the loaded file to standard output.
+
+    Returns
+    -------
+    Volume
+        The resulting 3D image volume, with the ``src_object`` attribute set to the tuple `(data, header)` returned by
+        ``nrrd.read`` (where `data` is a Numpy array and `header` is a dictionary) and the desired anatomical world
+        coordinate system ``system`` set to "RAS".
+
+    Raises
+    ------
+    IOError
+        If something goes wrong.
+    """
+    try:
+        src_object = voxel_data, hdr = nrrd.read(path)
+    except Exception as e:
+        raise IOError(e)
+
+    # Determine the image's assumed world coordinate system
+    src_system = __world_coordinate_system_from(hdr)
+
+    # Assemble the transformation matrix to map from voxels to the assumed world coordinate system
+    mat = __matrix_from(hdr)
+        
+    # Create new ``Volume`` instance
+    volume = Volume(src_voxel_data=voxel_data, src_transformation=mat, src_system=src_system, system="RAS",
+                    src_object=src_object)
+    return volume
+
+
+def __world_coordinate_system_from(header):
+    """
+    From the given nrrd header, determine the respective assumed anatomical world coordinate system.
+
+    Parameters
+    ----------
+    header : dict
+        A dictionary containing the nrrd header (as returned by ``nrrd.read``, for example).
+
+    Returns
+    -------
+    str
+        The three-character uppercase string determining the respective anatomical world coordinate system (such as
+        "RAS" or "LPS").
+
+    Raises
+    ------
+    IOError
+        If the header is missing the "space" field or the "space" field's value does not determine an anatomical world
+        coordinate system.
+    """
+    try:
+        system_str = header["space"]
+    except KeyError as e:
+        raise IOError("Need the header's \"space\" field to determine the image's anatomical coordinate system.")
+
+    if len(system_str) == 3:
+        # We are lucky: this is already the format that we need
+        return system_str.upper()
+
+    # We need to separate the string (such as "right-anterior-superior") at its dashes, then get the first character.
+    # We cannot handle 4D data nor data with scanner-based coordinates ("scanner-...") or non-anatomical coordinates
+    # ("3D-...")
+    system_components = system_str.split("-")
+    if len(system_components) == 3 and not system_components[0].lower() in ["scanner", "3d"]:
+        system_str = "".join(c[0].upper() for c in system_components)
+        return system_str
+
+    raise IOError("Cannot handle \"space\" value {}".format(system_str))
+
+
+def __matrix_from(header):
+    """
+    Calculate the transformation matrix from voxel coordinates to the header's anatomical world coordinate system.
+
+    Parameters
+    ----------
+    header : dict
+        A dictionary containing the nrrd header (as returned by ``nrrd.read``, for example).
+
+    Returns
+    -------
+    ndarray
+        The resulting :math:`4x4` transformation matrix.
+    """
+    try:
+        space_directions = header["space directions"]
+        space_origin = header["space origin"]
+    except KeyError as e:
+        raise IOError("Need the header's \"{}\" field to determine the mapping from voxels to world coordinates.".format(e))
+
+    # "... the space directions field gives, one column at a time, the mapping from image space to world space
+    # coordinates ... [1]_"
+    trans_3x3 = np.array(space_directions).T
+    trans_4x4 = np.eye(4)
+    trans_4x4[:3, :3] = trans_3x3
+    trans_4x4[:3, 3] = space_origin
+    return trans_4x4
