@@ -17,7 +17,7 @@ from mvloader.volume import Volume
 
 def open_image(path, verbose=True):
     """
-    Open a 3D nrrd image at the given path.
+    Open a 3D NRRD image at the given path.
 
     Parameters
     ----------
@@ -43,6 +43,12 @@ def open_image(path, verbose=True):
     except Exception as e:
         raise IOError(e)
 
+    if verbose:
+        print("Image loaded:", path)
+        print("Meta data:")
+        for k in sorted(hdr.keys(), key=str.lower):
+            print("{}: {!r}".format(k, hdr[k]))
+
     # Determine the image's assumed world coordinate system
     src_system = __world_coordinate_system_from(hdr)
 
@@ -53,6 +59,28 @@ def open_image(path, verbose=True):
     volume = Volume(src_voxel_data=voxel_data, src_transformation=mat, src_system=src_system, system="RAS",
                     src_object=src_object)
     return volume
+
+
+def save_image(path, data, transformation):
+    """
+    Save the given image data as a NRRD image file at the given path.
+
+    Parameters
+    ----------
+    path : str
+        The path for the file to be saved.
+    data : array_like
+        Three-dimensional array that contains the voxels to be saved.
+    transformation : array_like
+        :math:`4x4` transformation matrix that maps from ``data``'s voxel indices to a RAS anatomical world coordinate
+        system.
+    """
+    # Create the header entries from the transformation
+    space = "RAS"
+    space_directions = transformation[:3, :3].T.tolist()
+    space_origin = transformation[:3, 3].tolist()
+    options = {"space": space, "space directions": space_directions, "space origin": space_origin}
+    nrrd.write(filename=path, data=data, options=options)
 
 
 def __world_coordinate_system_from(header):

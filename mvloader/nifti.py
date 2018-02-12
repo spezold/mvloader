@@ -89,7 +89,7 @@ def open_image(path, verbose=True, repair=False):
     return volume
 
 
-def save_image(path, data, transformation=None):
+def save_image(path, data, transformation):
     """
     Save the given image data as a NIfTI image file at the given path.
 
@@ -99,9 +99,9 @@ def save_image(path, data, transformation=None):
         The path for the file to be saved.
     data : array_like
         Three-dimensional array that contains the voxels to be saved.
-    transformation : array_like, optional
+    transformation : array_like
         :math:`4x4` transformation matrix that maps from ``data``'s voxel indices to a RAS anatomical world coordinate
-        system or None.
+        system.
     """
     nibabel.Nifti1Image(data, transformation).to_filename(path)
 
