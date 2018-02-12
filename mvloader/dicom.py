@@ -114,7 +114,7 @@ class SliceStacker:
             self.__find_series_instance_uid(path)
         else:
             self.si_uid = si_uid
-            self.base_dir = str((path if path.is_dir() else path.parent()).absolute())
+            self.base_dir = str((path if path.is_dir() else path.parent()).resolve())
 
     def __find_series_instance_uid(self, path):
         """
@@ -126,13 +126,13 @@ class SliceStacker:
         path : pathlib.Path
             File path or directory path
         """
-        path = path.absolute()
+        path = path.resolve()
         if path.is_dir():
             self.base_dir = str(path)
             for f in sorted(path.iterdir(), key=lambda p: str(p).lower()):
                 try:
                     # Find the first DICOM file, determine its "Series Instance UID"
-                    dataset = dicom.read_file(str(f.absolute()), stop_before_pixels=True)
+                    dataset = dicom.read_file(str(f.resolve()), stop_before_pixels=True)
                     self.si_uid = dataset[SliceStacker.SI_UID_TAG].value
                     break
                 except:
@@ -152,10 +152,10 @@ class SliceStacker:
         """
         Collect the slices from the ``base_dir`` sharing the ``si_uid``. Fill ``slices`` accordingly.
         """
-        path = Path(self.base_dir).absolute()
+        path = Path(self.base_dir).resolve()
         for f in path.iterdir():
             try:
-                dataset = dicom.read_file(str(f.absolute()))
+                dataset = dicom.read_file(str(f.resolve()))
                 if not self.sloppy:
                     dataset_si_uid = dataset[SliceStacker.SI_UID_TAG].value
                     if dataset_si_uid == self.si_uid:
