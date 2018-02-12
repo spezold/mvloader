@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-Making use of the Pydicom library [1]_, return correctly stacked and oriented DICOM volumes via `volume.Volume`
+Making use of the Pydicom library [1]_, return correctly stacked and oriented DICOM volumes via ``volume.Volume``
 instances.
 
 References
@@ -85,9 +85,9 @@ class SliceStacker:
         (1) the one of the (alphanumerically) first DICOM file if ``path`` is a directory path or (2) the one of the
         given file if ``path`` is a file path.
     sloppy : bool, optional
-        If `False` (default), ``si_uid`` will be compared to find matching slices and ignore others that are in the
-        same directory; if `True`, this comparison will not be made and thus files with different "Series Instance
-        UID"s will potentially be stacked.
+        If `False` (default), ``si_uid`` (or the respective inferred "Series Instance UID" -- see ``si_uid``) will be
+        compared to find matching slices and ignore others that are in the same directory; if `True`, this comparison
+        will not be made and thus files with different "Series Instance UID"s will potentially be stacked.
     """
     SI_UID_TAG = (0x0020, 0x000E)  # Series Instance UID
     ORIENT_TAG = (0x0020, 0x0037)  # Image Orientation (Patient)
@@ -239,8 +239,3 @@ class SliceStacker:
         self.__sort_slices()
         
         return self
-
-
-if __name__ == "__main__":
-
-    open_stack("/home/simon/Data/20130604-PrismaTest/test2_20130603_0002_t2_spc_sag_p2_iso/test2_0002_000001.ima")
