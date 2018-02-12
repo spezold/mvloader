@@ -39,7 +39,7 @@ def open_image(path, verbose=True):
         If something goes wrong.
     """
     try:
-        src_object = voxel_data, hdr = nrrd.read(path)
+        src_object = (voxel_data, hdr) = nrrd.read(path)
     except Exception as e:
         raise IOError(e)
 
