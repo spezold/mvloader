@@ -49,11 +49,8 @@ def open_image(path, verbose=True):
         for k in sorted(hdr.keys(), key=str.lower):
             print("{}: {!r}".format(k, hdr[k]))
 
-    # Determine the image's assumed world coordinate system
-    src_system = __world_coordinate_system_from(hdr)
-
-    # Assemble the transformation matrix to map from voxels to the assumed world coordinate system
-    mat = __matrix_from(hdr)
+    src_system = __world_coordinate_system_from(hdr)  # No fixed world coordinates for NRRD images!
+    mat = __matrix_from(hdr)  # Voxels to world coordinates
         
     # Create new ``Volume`` instance
     volume = Volume(src_voxel_data=voxel_data, src_transformation=mat, src_system=src_system, system="RAS",
