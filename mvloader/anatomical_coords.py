@@ -212,4 +212,4 @@ def validate_permutation_matrix(perm):
     elif not np.all(np.isin(perm, [-1, 0, 1])):
         msg = "at least one matrix element is not in {-1, 0, 1}."
     if msg:
-        raise ValueError("The given matrix is not valid: %s" % msg)
+        raise ValueError("The given matrix is not valid: {}".format(msg))
