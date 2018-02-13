@@ -49,6 +49,7 @@ def open_image(path, verbose=True):
         for k in sorted(hdr.keys(), key=str.lower):
             print("{}: {!r}".format(k, hdr[k]))
 
+    __check_data_kinds_in(hdr)
     src_system = __world_coordinate_system_from(hdr)  # No fixed world coordinates for NRRD images!
     mat = __matrix_from(hdr)  # Voxels to world coordinates
         
@@ -94,6 +95,35 @@ def save_volume(path, volume):
     volume = volume.copy()
     volume.system = "RAS"
     save_image(path, data=volume.aligned_volume, transformation=volume.aligned_transformation)
+
+
+def __check_data_kinds_in(header):
+    """
+    Sanity check on the header's "kinds" field: are all entries either "domain" or "space" (i.e. are we really dealing
+    with scalar data on a spatial domain)?
+
+    Parameters
+    ----------
+    header : dict
+        A dictionary containing the NRRD header (as returned by ``nrrd.read``, for example).
+
+    Returns
+    -------
+    None
+        Simply return if everything is ok or the "kinds" field is not set.
+
+    Raises
+    ------
+    IOError
+        If the "kinds" filed contains entries other than "domain" or "space".
+    """
+    kinds = header.get("kinds")
+    if kinds is None:
+        return
+
+    for k in kinds:
+        if k.lower() not in ["domain", "space"]:
+            raise IOError("At least one data dimension contains non-spatial data!")
 
 
 def __world_coordinate_system_from(header):
