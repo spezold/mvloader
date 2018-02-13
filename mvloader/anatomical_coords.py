@@ -25,11 +25,11 @@ def permutation_matrix(src, dst):
     Returns
     -------
     tuple
-        A two-tuple `(src2dst, dst2src)` where `src2dst` holds the permutation and reflection matrix that maps
-        coordinates from the `src` system to the `dst` system, and `dst2src` holds the matrix for the inverse
+        A two-tuple ``(src2dst, dst2src)`` where ``src2dst`` holds the permutation and reflection matrix that maps
+        coordinates from the ``src`` system to the ``dst`` system, and `dst2src` holds the matrix for the inverse
         mapping. Both matrices are (3, 3)-shaped Numpy arrays with a determinant of plus/minus one, containing only
-        zeros, ones, and minus ones. A minus one signifies a swapped axis direction (e.g. "L" in `src` becomes "R" in
-        `dst`).
+        zeros, ones, and minus ones. A minus one signifies a swapped axis direction (e.g. "L" in ``src`` becomes "R" in
+        ``dst``).
     """
     src = src.upper()
     dst = dst.upper()
