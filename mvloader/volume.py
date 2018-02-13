@@ -106,7 +106,7 @@ class Volume:
         Calculate the mapping from the source anatomical coordinate system to the user desired anatomical coordinate
         system and vice versa (3x3 permutation-reflection matrices).
         """
-        self.__csrc2cuser, self.__cuser2csrc = anatomical_coords.matrix(self.__src_system, self.__user_system)
+        self.__csrc2cuser, self.__cuser2csrc = anatomical_coords.permutation_matrix(self.__src_system, self.__user_system)
 
     def __init_aligned_volume(self):
         """
@@ -275,7 +275,7 @@ class Volume:
         get_aligned_transformation : Same transformation, but for ``aligned_volume``.
         """
         csrc2csys = np.eye(4)
-        csrc2csys[:-1, :-1] = anatomical_coords.matrix(self.__src_system, system)[0]
+        csrc2csys[:-1, :-1] = anatomical_coords.permutation_matrix(self.__src_system, system)[0]
         result = csrc2csys @ self.__vsrc2csrc
         return result
 

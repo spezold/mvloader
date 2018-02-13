@@ -8,7 +8,7 @@ Transform between different 3D anatomical coordinate systems (RAS, LAS etc.)
 import numpy as np
 
 
-def matrix(src, dst):
+def permutation_matrix(src, dst):
     """
     Calculate the permutation-reflection matrix that maps axes from the given source anatomical coordinate system to the
     given destination anatomical coordinate system, as well as its inverse.
