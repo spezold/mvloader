@@ -30,8 +30,8 @@ def open_stack(path, verbose=True, sloppy=False):
     both cases and try to combine all of the directory's DICOM files.
 
     The given files need *not* be named according to their stacking order -- in fact, their names do not influence
-    the stacking process. Instead, "Image Position (Patient)" (0020,0032) and "Image Orientation (Patient)" (0020,
-    0037) are evaluated for working out the stacking order. See e.g. [1]_ and [2]_ for the necessary steps.
+    the stacking process. Instead, "Image Position (Patient)" (0020,0032) and "Image Orientation (Patient)" (0020,0037)
+    are evaluated for working out the stacking order. See e.g. [1]_ and [2]_ for the necessary steps.
 
     Parameters
     ----------
