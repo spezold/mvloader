@@ -31,8 +31,8 @@ class Volume:
         A three-dimensional array that contains the image voxels, arranged to match the coordinate transformation
         matrix ``src_transformation``.
     src_transformation : array_like
-        A :math:`4x4` matrix that describes the mapping from voxel indices in ``src_voxel_data`` to a given anatomical
-        world coordinate system (``src_system``).
+        A :math:`4x4` matrix that describes the mapping from voxel indices in ``src_voxel_data`` to the given anatomical
+        world coordinate system ``src_system``.
     src_system : str
         A three-character string that describes the anatomical world coordinate system for the provided
         ``src_transformation`` matrix. Any permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used. For
@@ -84,22 +84,15 @@ class Volume:
         Returns
         -------
         str
-            The desired anatomical world coordinate system as a three-character string.
+            The desired anatomical world coordinate system as a three-character string. Any permutation of {A,P}, {I,S},
+            {L,R} (case-insensitive) can be used. When being set, fields like ``aligned_volume``, ``aligned_spacing``,
+            ``aligned_transformation``, and ``src_to_aligned_transformation`` will be adjusted accordingly.
         """
         return self.__user_system
 
     @system.setter
     def system(self, value):
-        """
-        Set the desired anatomical world coordinate system to the given system. Fields like ``aligned_volume`` and
-        ``aligned_spacing`` will be adjusted accordingly.
 
-        Parameters
-        ----------
-        value : str
-            A three-character string that describes the newly assumed anatomical world coordinate system. Any
-            permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used.
-        """
         value = value.upper()
         if value != self.__user_system:
             self.__user_system = value
@@ -149,8 +142,8 @@ class Volume:
         Calculate ``vsrc2cuser`` and ``vuser2cuser``, i.e. the mappings from ``src_volume``'s and ``aligned_volume``'s
         voxel indices to the currently desired anatomical world coordinate system ``system``.
         """
-        self.__vsrc2cuser = self.get_src_matrix(system=self.__user_system)
-        self.__vuser2cuser = self.get_aligned_matrix(system=self.__user_system)
+        self.__vsrc2cuser = self.get_src_transformation(system=self.__user_system)
+        self.__vuser2cuser = self.get_aligned_transformation(system=self.__user_system)
 
     def __init_spacing(self):
         """
@@ -184,26 +177,37 @@ class Volume:
         return self.__src_object
 
     @property
-    def src_matrix(self):
+    def src_transformation(self):
         """
         Returns
         -------
         ndarray
-            The :math:`4x4` transformation matrix that maps from ``src_volume``'s voxel indices to the desired
-            anatomical world coordinate system ``system``.
+            The :math:`4x4` transformation matrix that maps from ``src_volume``'s voxel indices to the *original*
+            anatomical world coordinate system ``src_system`` (new copy).
         """
-        return self.__vsrc2cuser
+        return self.__vsrc2csrc.copy()
 
     @property
-    def aligned_matrix(self):
+    def aligned_transformation(self):
         """
         Returns
         -------
         ndarray
-            The :math:`4x4` transformation matrix that maps from ``aligned_volume``'s voxel indices to the desired
-            anatomical world coordinate system ``system``.
+            The :math:`4x4` transformation matrix that maps from ``aligned_volume``'s voxel indices to the *desired*
+            anatomical world coordinate system ``system`` (new copy).
         """
-        return self.__vuser2cuser
+        return self.__vuser2cuser.copy()
+
+    @property
+    def src_to_aligned_transformation(self):
+        """
+        Returns
+        -------
+        ndarray
+            The :math:`4x4` transformation matrix that maps from ``src_volume``'s voxel indices to the *desired*
+            anatomical world coordinate system ``system`` (new copy).
+        """
+        return self.__vsrc2cuser.copy()
 
     @property
     def src_volume(self):
@@ -223,9 +227,9 @@ class Volume:
         ndarray
             The 3-dimensional Numpy array that contains the image information with the voxel data axes aligned to the
             desired anatomical world coordinate system ``system`` as closely as is possible without reinterpolation.
-            This means, for example, if ``system`` is "RAS", then ``aligned_volume`` will hold an array where increasing
-            the index on axis 0 will reach a voxel coordinate that is typically more to the right side of the imaged
-            subject, increasing the index on axis 1 will reach a voxel coordinate that is more anterior,
+            This means, for example, if ``system`` is "RAS", then ``aligned_volume`` will hold an array where
+            increasing the index on axis 0 will reach a voxel coordinate that is typically more to the right side of
+            the imaged subject, increasing the index on axis 1 will reach a voxel coordinate that is more anterior,
             and increasing the index on axis 2 will reach a voxel coordinate that is more superior.
         """
         return self.__aligned_volume
@@ -250,7 +254,7 @@ class Volume:
         """
         return self.__aligned_spacing
 
-    def get_src_matrix(self, system):
+    def get_src_transformation(self, system):
         """
         Get a transformation matrix that maps from ``src_volume``'s voxel indices to the given anatomical world
         coordinate system.
@@ -268,14 +272,14 @@ class Volume:
 
         See also
         --------
-        get_aligned_matrix : Same transformation, but for ``aligned_volume``.
+        get_aligned_transformation : Same transformation, but for ``aligned_volume``.
         """
         csrc2csys = np.eye(4)
         csrc2csys[:-1, :-1] = anatomical_coords.matrix(self.__src_system, system)[0]
         result = csrc2csys @ self.__vsrc2csrc
         return result
 
-    def get_aligned_matrix(self, system):
+    def get_aligned_transformation(self, system):
         """
         Get a transformation matrix that maps from ``aligned_volume``'s voxel indices to the given anatomical world
         coordinate system.
@@ -293,8 +297,18 @@ class Volume:
 
         See also
         --------
-        get_src_matrix : Same transformation, but for ``src_volume``.
+        get_src_transformation : Same transformation, but for ``src_volume``.
         """
-        vsrc2csys = self.get_src_matrix(system=system)
+        vsrc2csys = self.get_src_transformation(system=system)
         result = vsrc2csys @ self.__vuser2vsrc
         return result
+
+    def copy(self):
+        """
+        Returns
+        -------
+        Volume
+            A copy of the current instance.
+        """
+        return Volume(src_voxel_data=self.__src_volume.copy(), src_transformation=self.__vsrc2csrc.copy(),
+                      src_system=self.__src_system, system=self.__user_system, src_object=self.__src_object)

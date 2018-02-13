@@ -106,6 +106,22 @@ def save_image(path, data, transformation):
     nibabel.Nifti1Image(data, transformation).to_filename(path)
 
 
+def save_volume(path, volume):
+    """
+    Save the given ``Volume`` instance as a NIfTI image file at the given path.
+
+    Parameters
+    ----------
+    path : str
+        The path for the file to be saved.
+    volume : Volume
+        The ``Volume`` instance containing the image data to be saved.
+    """
+    volume = volume.copy()
+    volume.system = "RAS"
+    save_image(path, data=volume.aligned_volume, transformation=volume.aligned_transformation)
+
+
 def __repair_dim(data, verbose):
     """
     For 4d arrays with the last dimension containing only one element, return a new 3d array of the same content. For

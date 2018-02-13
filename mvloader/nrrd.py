@@ -29,9 +29,9 @@ def open_image(path, verbose=True):
     Returns
     -------
     Volume
-        The resulting 3D image volume, with the ``src_object`` attribute set to the tuple `(data, header)` returned by
-        ``nrrd.read`` (where `data` is a Numpy array and `header` is a dictionary) and the desired anatomical world
-        coordinate system ``system`` set to "RAS".
+        The resulting 3D image volume, with the ``src_object`` attribute set to the tuple `(data, header)` returned
+        by pynrrd's ``nrrd.read`` (where `data` is a Numpy array and `header` is a dictionary) and the desired
+        anatomical world coordinate system ``system`` set to "RAS".
 
     Raises
     ------
@@ -78,6 +78,22 @@ def save_image(path, data, transformation):
     space_origin = transformation[:3, 3].tolist()
     options = {"space": space, "space directions": space_directions, "space origin": space_origin}
     nrrd.write(filename=path, data=data, options=options)
+
+
+def save_volume(path, volume):
+    """
+    Save the given ``Volume`` instance as a NRRD image file at the given path.
+
+    Parameters
+    ----------
+    path : str
+        The path for the file to be saved.
+    volume : Volume
+        The ``Volume`` instance containing the image data to be saved.
+    """
+    volume = volume.copy()
+    volume.system = "RAS"
+    save_image(path, data=volume.aligned_volume, transformation=volume.aligned_transformation)
 
 
 def __world_coordinate_system_from(header):
