@@ -63,7 +63,7 @@ def open_image(path, verbose=True, repair=False):
         raise IOError("Currently only 3D images can be handled. The given image has {} dimension(s).".format(ndim))
     
     if verbose:
-        print("Image loaded:", path)
+        print("Loading image:", path)
         print("Meta data:")
         print(hdr)
         print("Image dimensions:", voxel_data.ndim)
@@ -106,7 +106,7 @@ def save_image(path, data, transformation):
     nibabel.Nifti1Image(data, transformation).to_filename(path)
 
 
-def save_volume(path, volume, src_alignment=True):
+def save_volume(path, volume, src_order=True):
     """
     Save the given ``Volume`` instance as a NIfTI image file at the given path.
 
@@ -116,13 +116,13 @@ def save_volume(path, volume, src_alignment=True):
         The path for the file to be saved.
     volume : Volume
         The ``Volume`` instance containing the image data to be saved.
-    src_alignment : bool, optional
+    src_order : bool, optional
         If `True` (default), order the saved voxels as in ``src_volume``; if `False`, order the saved voxels as in
         ``aligned_volume``. In any case, the correct transformation matrix will be chosen.
     """
     system = "RAS"
 
-    if src_alignment:
+    if src_order:
         data = volume.src_volume
         transformation = volume.get_src_transformation(system)
     else:

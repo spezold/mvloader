@@ -44,7 +44,7 @@ def open_image(path, verbose=True):
         raise IOError(e)
 
     if verbose:
-        print("Image loaded:", path)
+        print("Loading image:", path)
         print("Meta data:")
         for k in sorted(hdr.keys(), key=str.lower):
             print("{}: {!r}".format(k, hdr[k]))
@@ -59,7 +59,7 @@ def open_image(path, verbose=True):
     return volume
 
 
-def save_image(path, data, transformation, system="RAS"):
+def save_image(path, data, transformation, system="RAS", kinds=None):
     """
     Save the given image data as a NRRD image file at the given path.
 
@@ -75,16 +75,25 @@ def save_image(path, data, transformation, system="RAS"):
     system : str, optional
         The world coordinate system to which ``transformation`` maps the voxel data. Either "RAS" (default), "LAS", or
         "LPS" (these are the ones supported by the NRRD format).
+    kinds : str or sequence of strings, optional
+        If given, the string(s) will be used to set the NRRD header's "kinds" field. If a single string is given, it
+        will be used for all dimensions. If multiple strings are given, they will be used in the given order. If
+        nothing is given (default), the "kinds" field will not be set. Note that all strings should either be "domain"
+        or "space".
+
     """
     # Create the header entries from the transformation
     space = system.upper()
     space_directions = transformation[:3, :3].T.tolist()
     space_origin = transformation[:3, 3].tolist()
     options = {"space": space, "space directions": space_directions, "space origin": space_origin}
+    if kinds is not None:
+        kinds = (data.ndim * [kinds]) if isinstance(kinds, str) else list(kinds)
+        options["kinds"] = kinds
     nrrd.write(filename=path, data=data, options=options)
 
 
-def save_volume(path, volume, src_alignment=True, src_system=True):
+def save_volume(path, volume, src_order=True, src_system=True, kinds=None):
     """
     Save the given ``Volume`` instance as a NRRD image file at the given path.
 
@@ -94,7 +103,7 @@ def save_volume(path, volume, src_alignment=True, src_system=True):
         The path for the file to be saved.
     volume : Volume
         The ``Volume`` instance containing the image data to be saved.
-    src_alignment : bool, optional
+    src_order : bool, optional
         If `True` (default), order the saved voxels as in ``src_volume``; if `False`, order the saved voxels as in
         ``aligned_volume``. In any case, the correct transformation matrix will be chosen.
     src_system : bool, optional
@@ -102,18 +111,23 @@ def save_volume(path, volume, src_alignment=True, src_system=True):
         saving; if `False`, try to use ``volume``'s ``system`` instead. In either case, this works if the system is
         either "RAS", "LAS", or "LPS" (these are the ones supported by the NRRD format). If a different system is
         given, use "RAS" instead.
+    kinds : str or sequence of strings, optional
+        If given, the string(s) will be used to set the NRRD header's "kinds" field. If a single string is given, it
+        will be used for all dimensions. If multiple strings are given, they will be used in the given order. If
+        nothing is given (default), the "kinds" field will not be set. Note that all strings should either be "domain"
+        or "space".
     """
     system = volume.src_system if src_system else volume.system
     system = system if system in ["RAS", "LAS", "LPS"] else "RAS"
 
-    if src_alignment:
+    if src_order:
         data = volume.src_volume
         transformation = volume.get_src_transformation(system)
     else:
         data = volume.aligned_volume
         transformation = volume.get_aligned_transformation(system)
 
-    save_image(path, data=data, transformation=transformation, system=system)
+    save_image(path, data=data, transformation=transformation, system=system, kinds=kinds)
 
 
 def __check_data_kinds_in(header):
@@ -134,7 +148,7 @@ def __check_data_kinds_in(header):
     Raises
     ------
     IOError
-        If the "kinds" filed contains entries other than "domain" or "space".
+        If the "kinds" field contains entries other than "domain" or "space".
     """
     kinds = header.get("kinds")
     if kinds is None:
