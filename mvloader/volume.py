@@ -312,3 +312,35 @@ class Volume:
         """
         return Volume(src_voxel_data=self.__src_volume.copy(), src_transformation=self.__vsrc2csrc.copy(),
                       src_system=self.__src_system, system=self.__user_system, src_object=self.__src_object)
+
+    def copy_like(self, template):
+        """
+        Create a copy of the current instance, rearranging the following data to match the respective entries of
+        ``template``: (1) ``src_volume``, (2) ``src_system``, (3) ``aligned_volume``, (4) ``system``.
+
+        To match the ``template``'s voxel order of ``src_volume``, (1) both a copy of the current instance and
+        ``template`` will be aligned to the same anatomical world coordinate system and then (2) ``template``'s
+        alignment process will be inverted on the copy of the current instance. The coordinate systems will only be
+        adapted insofar as the direction and order of axes is copied from ``template``, but not the rotations and
+        scalings.
+
+        Parameters
+        ----------
+        template : Volume
+            The instance whose order of ``src_volume`` voxels and whose world coordinate systems should be adopted.
+
+        Returns
+        -------
+        Volume
+            A rearranged copy of the current instance.
+        """
+        current_instance = self.copy()
+
+        # Align the current instance to the same user coordinates as template
+        current_instance.system = template.system
+        # Get the mapping from template's aligned_volume to its src_volume, then use it to rearrange the current
+        # instance's voxels and transformation matrices
+        src_voxel_data = anatomical_coords.swap(current_instance.aligned_volume, template.__vuser2vsrc)
+        src_transformation = current_instance.get_aligned_transformation(template.src_system) @ template.__vsrc2vuser
+        return Volume(src_voxel_data=src_voxel_data, src_transformation=src_transformation,
+                      src_system=template.src_system, sytem=template.system, src_object=current_instance.src_object)
