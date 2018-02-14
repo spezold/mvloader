@@ -343,4 +343,4 @@ class Volume:
         src_voxel_data = anatomical_coords.swap(current_instance.aligned_volume, template.__vuser2vsrc)
         src_transformation = current_instance.get_aligned_transformation(template.src_system) @ template.__vsrc2vuser
         return Volume(src_voxel_data=src_voxel_data, src_transformation=src_transformation,
-                      src_system=template.src_system, sytem=template.system, src_object=current_instance.src_object)
+                      src_system=template.src_system, system=template.system, src_object=current_instance.src_object)
