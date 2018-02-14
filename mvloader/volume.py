@@ -113,29 +113,50 @@ class Volume:
         Calculate ``aligned_volume``: swap the ``src_volume`` to match the currently desired anatomical world coordinate
         system ``user_system``. Also calculate the voxel swapping matrices in the process.
         """
-        ndim = 3
-
         # First map the voxels to lie parallel to the *original* coordinate system's axes, then map to the *desired*
         # coordinate system. This results in the mapping from the ``src_volume`` voxel coordinates to ``aligned_volume``
         # voxel coordinates (3x3)
-        perm = anatomical_coords.find_closest_permutation_matrix(self.__vsrc2csrc[:ndim, :ndim])
+        perm = anatomical_coords.find_closest_permutation_matrix(self.__vsrc2csrc[:3, :3])
         vsrc2vuser3 = self.__csrc2cuser @ perm
-        # Make it a 4x4 matrix: Add offset of (dimension size - 1) for the inverted dimensions (in this way account
-        # for the inverted and thus negative voxel indices)
-        offset = (vsrc2vuser3 @ (np.asarray(self.src_volume.shape) - 1)).clip(max=0)
-        vsrc2vuser4 = np.eye(ndim + 1, dtype=np.int)
-        vsrc2vuser4[:ndim, :ndim] = vsrc2vuser3
-        vsrc2vuser4[:ndim, ndim] = -offset
-        vuser2vsrc4 = np.round(np.linalg.inv(vsrc2vuser4)).astype(np.int)
+        # Make it a 4x4 matrix
+        vsrc2vuser4 = self.__vsrc2vdst_4x4(vsrc2vuser3, self.src_volume.shape)
+        vuser2vsrc4 = np.round(np.linalg.inv(vsrc2vuser4)).astype(vsrc2vuser4.dtype)
 
-        anatomical_coords.validate_permutation_matrix(vsrc2vuser4[:ndim, :ndim])  # Just to be sure ...
-        anatomical_coords.validate_permutation_matrix(vuser2vsrc4[:ndim, :ndim])
+        anatomical_coords.validate_permutation_matrix(vsrc2vuser4[:3, :3])  # Just to be sure ...
+        anatomical_coords.validate_permutation_matrix(vuser2vsrc4[:3, :3])
 
         self.__vuser2vsrc = vuser2vsrc4
         self.__vsrc2vuser = vsrc2vuser4
 
         # Actually swap the volume
         self.__aligned_volume = anatomical_coords.swap(self.__src_volume, vsrc2vuser4)
+
+    @classmethod
+    def __vsrc2vdst_4x4(cls, vsrc2vdst_3x3, src_shape):
+        """
+        Calculate the offset part of the tranformation matrix that maps from voxel indices in a source volume to voxel
+        indices in a destination volume, given the shape of the source volume.
+
+        Parameters
+        ----------
+        vsrc2vdst_3x3 : array_like
+            :math:`3x3` transformation matrix that maps from source voxel indices to destination voxel indices.
+        src_shape : array_like
+            Three-tuple or similar, giving the shape of the source volume.
+
+        Returns
+        -------
+        ndarray
+            :math:`4x4` matrix that completes the given :math:`3x3` matrix with its offset (i.e. translational) part.
+        """
+        # Add offset of (dimension size - 1) for the inverted dimensions (in this way account for the inverted and
+        # thus negative voxel indices)
+        offset = (vsrc2vdst_3x3 @ (np.asarray(src_shape) - 1)).clip(max=0)
+        vsrc2vdst_4x4 = np.eye(4, dtype=np.int)
+        vsrc2vdst_4x4[:3, :3] = vsrc2vdst_3x3
+        vsrc2vdst_4x4[:3, 3] = -offset
+        return vsrc2vdst_4x4
+
 
     def __init_voxel_mapping(self):
         """
@@ -338,9 +359,12 @@ class Volume:
 
         # Align the current instance to the same user coordinates as template
         current_instance.system = template.system
-        # Get the mapping from template's aligned_volume to its src_volume, then use it to rearrange the current
-        # instance's voxels and transformation matrices
-        src_voxel_data = anatomical_coords.swap(current_instance.aligned_volume, template.__vuser2vsrc)
-        src_transformation = current_instance.get_aligned_transformation(template.src_system) @ template.__vsrc2vuser
+        # Get the mapping from template's aligned_volume to its src_volume, adjust for the current volume's shape,
+        # then use it to rearrange the current instance's voxels and transformation matrices
+        vuser2vsrc = Volume.__vsrc2vdst_4x4(template.__vuser2vsrc[:3, :3], current_instance.aligned_volume.shape)
+        vsrc2vuser = np.round(np.linalg.inv(vuser2vsrc)).astype(vuser2vsrc.dtype)
+        src_voxel_data = anatomical_coords.swap(current_instance.aligned_volume, vuser2vsrc)
+        src_transformation = current_instance.get_aligned_transformation(template.src_system) @ vsrc2vuser
+
         return Volume(src_voxel_data=src_voxel_data, src_transformation=src_transformation,
                       src_system=template.src_system, system=template.system, src_object=current_instance.src_object)
