@@ -59,7 +59,7 @@ def open_image(path, verbose=True):
     return volume
 
 
-def save_image(path, data, transformation):
+def save_image(path, data, transformation, system="RAS"):
     """
     Save the given image data as a NRRD image file at the given path.
 
@@ -70,18 +70,21 @@ def save_image(path, data, transformation):
     data : array_like
         Three-dimensional array that contains the voxels to be saved.
     transformation : array_like
-        :math:`4x4` transformation matrix that maps from ``data``'s voxel indices to a RAS anatomical world coordinate
-        system.
+        :math:`4x4` transformation matrix that maps from ``data``'s voxel indices to the given ``system``'s anatomical
+        world coordinate system.
+    system : str, optional
+        The world coordinate system to which ``transformation`` maps the voxel data. Either "RAS" (default), "LAS", or
+        "LPS" (these are the ones supported by the NRRD format).
     """
     # Create the header entries from the transformation
-    space = "RAS"
+    space = system.upper()
     space_directions = transformation[:3, :3].T.tolist()
     space_origin = transformation[:3, 3].tolist()
     options = {"space": space, "space directions": space_directions, "space origin": space_origin}
     nrrd.write(filename=path, data=data, options=options)
 
 
-def save_volume(path, volume):
+def save_volume(path, volume, src_alignment=True, src_system=True):
     """
     Save the given ``Volume`` instance as a NRRD image file at the given path.
 
@@ -91,10 +94,26 @@ def save_volume(path, volume):
         The path for the file to be saved.
     volume : Volume
         The ``Volume`` instance containing the image data to be saved.
+    src_alignment : bool, optional
+        If `True` (default), order the saved voxels as in ``src_volume``; if `False`, order the saved voxels as in
+        ``aligned_volume``. In any case, the correct transformation matrix will be chosen.
+    src_system : bool, optional
+        If `True` (default), try to use ``volume``'s ``src_system`` as the anatomical world coordinate system for
+        saving; if `False`, try to use ``volume``'s ``system`` instead. In either case, this works if the system is
+        either "RAS", "LAS", or "LPS" (these are the ones supported by the NRRD format). If a different system is
+        given, use "RAS" instead.
     """
-    volume = volume.copy()
-    volume.system = "RAS"
-    save_image(path, data=volume.aligned_volume, transformation=volume.aligned_transformation)
+    system = volume.src_system if src_system else volume.system
+    system = system if system in ["RAS", "LAS", "LPS"] else "RAS"
+
+    if src_alignment:
+        data = volume.src_volume
+        transformation = volume.get_src_transformation(system)
+    else:
+        data = volume.aligned_volume
+        transformation = volume.get_aligned_transformation(system)
+
+    save_image(path, data=data, transformation=transformation, system=system)
 
 
 def __check_data_kinds_in(header):
