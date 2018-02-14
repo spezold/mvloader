@@ -1,10 +1,11 @@
 MVloader
 ========
 
-`MVloader` is meant to be a tiny helper to load and save "medical
-volumetric data" or "image volumes", i.e. three-dimensional medical
-images (DICOM, NIfTI, or NRRD). It is also meant to simplify dealing
-with different anatomical world coordinate systems.
+`MVloader` is meant to be a tiny helper to load and save *medical
+volumetric* data (therefore *MV*) or *image volumes*, i.e.
+three-dimensional medical images (DICOM, NIfTI, or NRRD). It is also
+meant to simplify dealing with different anatomical world coordinate
+systems.
 
 `MVloader`'s only dependencies are the underlying image libraries
 (`pydicom`, `nibabel`, `pynrrd`) and `NumPy`.
@@ -55,9 +56,9 @@ from voxel indices to anatomical world coordinates:
 *  `src_transformation` maps from `src_volume`'s voxel indices to the
    world coordinate system that has been assumed by the underlying image
    format (which is provided via `Volume`'s `src_system` property).
-*  `aligned_transformation` maps from `aligned_volume`s voxel indices to
-   the world coordinate system that has been chosen by the user (which
-   is provided via `Volume`'s `system` property).
+*  `aligned_transformation` maps from `aligned_volume`'s voxel indices
+   to the world coordinate system that has been chosen by the user
+   (which is provided via `Volume`'s `system` property).
 *  `src_to_aligned_transformation` maps from `src_volume`'s voxel
    indices to the world coordinate system that has been chosen by the
    user (namely `system`).
@@ -154,7 +155,7 @@ print(volume.aligned_transformation)
 Thus, in case an axis direction is swapped (e.g. from "L" to "R") the
 world coordinate system's origin will remain in the same voxel position.
 However, as `aligned_volume`'s respective voxel axis will also be
-swapped, the resulting transformation may look hugely different.
+swapped, the resulting transformation matrix may look hugely different.
 
 As `src_transformation` is an identity matrix and as both anatomical
 world coordinate systems have the same order of axes (first axis:
