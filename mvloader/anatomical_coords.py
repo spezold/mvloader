@@ -72,10 +72,10 @@ def find_closest_permutation_matrix(trans):
 
     perm = np.zeros((ndim, ndim), dtype=np.int)
     remaining_indices = list(range(ndim))
-    # Set the maximum along each row to +/-1, keeping track of the positions already set to avoid collisions
+    # Set the maximum along each column to +/-1, keeping track of the positions already set to avoid collisions
     for i in range(ndim):
-        m = np.argmax(trans_abs[i, remaining_indices])
-        perm[i, remaining_indices[m]] = np.sign(trans[i, remaining_indices[m]])
+        m = np.argmax(trans_abs[remaining_indices, i])
+        perm[remaining_indices[m], i] = np.sign(trans[remaining_indices[m], i])
         remaining_indices.pop(m)
     return perm
 
