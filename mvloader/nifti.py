@@ -106,7 +106,7 @@ def save_image(path, data, transformation):
     nibabel.Nifti1Image(data, transformation).to_filename(path)
 
 
-def save_volume(path, volume):
+def save_volume(path, volume, src_alignment=True):
     """
     Save the given ``Volume`` instance as a NIfTI image file at the given path.
 
@@ -116,10 +116,20 @@ def save_volume(path, volume):
         The path for the file to be saved.
     volume : Volume
         The ``Volume`` instance containing the image data to be saved.
+    src_alignment : bool, optional
+        If `True` (default), order the saved voxels as in ``src_volume``; if `False`, order the saved voxels as in
+        ``aligned_volume``. In any case, the correct transformation matrix will be chosen.
     """
-    volume = volume.copy()
-    volume.system = "RAS"
-    save_image(path, data=volume.aligned_volume, transformation=volume.aligned_transformation)
+    system = "RAS"
+
+    if src_alignment:
+        data = volume.src_volume
+        transformation = volume.get_src_transformation(system)
+    else:
+        data = volume.aligned_volume
+        transformation = volume.get_aligned_transformation(system)
+
+    save_image(path, data=data, transformation=transformation)
 
 
 def __repair_dim(data, verbose):
