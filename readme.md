@@ -162,8 +162,8 @@ world coordinate systems have the same order of axes (first axis:
 left-right, second axis: anterior-posterior, third axis:
 superior-inferior) the mapping from `src_volume` to our choice of world
 coordinate system, which is provided via
-`src_to_aligned_transformation`, *almost* remains an identity matrix,
-too. However, as the first two axes are flipped, we find a -1 rather
+`src_to_aligned_transformation`, *almost* remains an identity matrix as
+well. However, as the first two axes are flipped, we find a -1 rather
 than a 1 there:
 ```python
 print(volume.src_to_aligned_transformation)
