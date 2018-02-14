@@ -26,9 +26,13 @@ particular
    system, and
 2. ``Volume`` provides a voxel representation (called `aligned_volume`)
    with the voxel axes aligned as closely as possible to the user's
-   choice of anatomical world coordinate system, which simplifies
-   visualizing volumes in (almost) correct orientation without the need
-   for interpolation.
+   choice of anatomical world coordinate system. This representation
+   simplifies visualizing volumes in *almost* correct anatomical
+   orientation and processing data differently and consistently along
+   different body axes. The `aligned_volume` representation is therefore
+   suitable for cases in which one is not interested in a *precise*
+   alignment, which, in turn, would generally require an expensive
+   interpolation of the voxel data.
 
 ### Voxel Data Representations
 
@@ -204,6 +208,7 @@ print(volume.src_to_aligned_transformation)
 #  [ 0  0  0 1]]
 ```
 
+
 Loading Images
 --------------
 
@@ -268,4 +273,56 @@ volume = nrrd.open_image("/foo/bar.nrrd")
 ```
 For more options, see the documentation of the `mvloader.nrrd` module.
 
-<!--- TODO: Continue with saving images -->
+
+Saving Images
+-------------
+
+Saving DICOM images is currently not supported (and most likely won't be
+in the foreseeable future).
+
+### Saving NIfTI and NRRD Images
+
+Saving NIfTI and NRRD images works pretty much the same.
+
+#### Saving NumPy Array Data
+If the voxel data is present as a NumPy array, one might use
+`save_image`:
+```python
+nifti.save_image(path, data, transformation)
+nrrd.save_image(path, data, transformation, system)
+```
+Here, `path` is the file path, `data` is the three-dimensional array
+containing the voxel data, and `transformation` is a matrix that maps
+from `data`'s voxel indices to an anatomical world coordinate system --
+"RAS" in the case of NIfTI and also by default in the case of NRRD.
+
+However, as the NRRD format allows to specify other coordinate systems,
+`nrrd.save_image()` has an additional parameter, `system`, which may be
+used to specify a different anatomical world coordinate system for the
+saved image.
+
+#### Saving `Volume` Instance Data
+
+If the image data is available as a `Volume` instance, one might prefer
+using `save_volume`:
+```python
+nifti.save_volume(path, volume, src_order)
+nrrd.save_volume(path, volume, src_order, src_system)
+```
+Here, `path` is again the file path, and `volume` is the `Volume`
+instance to be saved. Additionally, `src_order` is a boolean that
+determines the order of the voxels to be saved: if `True`, voxels will
+be sorted as in `volume.src_volume`; if `False`, voxels will be sorted
+as in `volume.aligned_volume`.
+
+Again, the NRRD function has an additional parameter for choosing the
+anatomical world coordinate system: if `src_system` is True, the
+function will try to use `volume.src_system` as the saved image's
+anatomical world coordinate system; if `False`, the function will try to
+use `volume.system` instead. Why *try to*? Because not all coordinate
+system's supported by `Volume` are supported by the NRRD format (and
+vice versa). Thus, if an unsupported system is detected,
+`nrrd.save_volume` will silently use "RAS".
+
+For more options, see the documentation of the respective `save_*`
+functions.
