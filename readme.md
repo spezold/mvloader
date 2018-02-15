@@ -196,8 +196,8 @@ print(volume.aligned_transformation)
 Thus, in case an axis direction is swapped (e.g. from "L" to "R") the
 world coordinate system's origin will remain in the same voxel position.
 However, as the voxel position will also change (with the respective
-voxel axis being reversed), the resulting transformation matrix may look
-hugely different.
+voxel axis being reversed), the offset part of the resulting
+transformation matrix may look hugely different.
 
 As `src_transformation` is an identity matrix and as both anatomical
 world coordinate systems have the same order of axes (first axis:
