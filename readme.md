@@ -95,50 +95,71 @@ import numpy as np
 from mvloader.volume import Volume
 
 # A simple 10x10x10 volume
-src_voxel_data = np.arange(1000).reshape(10, 10, 10)
+given_voxels = np.arange(1000).reshape(10, 10, 10)
 # No rotations or translations from the provided voxel indices to the
 # provided anatomical world coordinate system ...
-src_transformation = np.eye(4)
+voxels2given_world = np.eye(4)
 # ... which we assume is DICOM-style ("LPS")
-src_system = "LPS"
+given_world = "LPS"
 # However, as we prefer to work with NIfTI-style world coordinates, our
 # user choice is "RAS"
-system = "RAS"
+our_world = "RAS"
 
-volume = Volume(src_voxel_data, src_transformation, src_system, system)
+volume = Volume(src_voxel_data=given_voxels,
+                src_transformation=voxels2given_world,
+                src_system=given_world,
+                system=our_world)
+```
+In a real application, Both `src_transformation` and `src_system` are
+usually not our choice, but the result of loading a particular image of
+a particular format (see *Loading Images* below). In our example, by
+setting `src_transformation` to an identity matrix, we know that the
+`src_system`'s world coordinate origin must lie at voxel index
+`[0, 0, 0]`, which we can easily check:
+```python
+voxels2world = volume.src_transformation
+world2voxels = np.linalg.inv(voxels2world)
+world_origin = [0, 0, 0, 1]
+voxel_index_of_world_origin = world2voxels[:3] @ world_origin
+print(voxel_index_of_world_origin)
+# [0. 0. 0.]
 ```
 
-By setting `src_transformation` to an identity matrix, we know that the
-`src_system`'s world coordinate origin must lie at the voxel index
-`volume.src_volume[0, 0, 0]` (note that we have to use homogeneous
-coordinates here, which explains the trailing 1):
-```python
-print(volume.src_transformation @ [0, 0, 0, 1])
-# [0 0 0 1]
-```
-Both `src_transformation` and `src_system` are usually not our choice,
-but the result of loading a particular image of a particular format.
+Note that we had to use homogeneous coordinates for the transformation,
+which explains the trailing 1 for the world origin's coordinate;
+however, by using only the first three rows of the transformation matrix
+`world2voxels`, our resulting voxel index contains only three values, as
+one could expect.
 
-The value at the world coordinate system's origin is:
+As we chose the voxel data as `np.arange(1000).reshape(10, 10, 10)`, the
+value at voxel index `[0, 0, 0]` is zero. As voxel index `[0, 0, 0]`
+coincides with the world coordinate system's origin (see above), this
+means that the value at the world coordinate sytem's origin is zero:
 ```python
-print(volume.src_volume[0, 0, 0])
+voxel_index_of_world_origin = tuple(voxel_index_of_world_origin.astype(np.int))
+print(volume.src_volume[voxel_index_of_world_origin])
 # 0
 ```
 
 Now, as we seem to prefer working with RAS rather than LPS coordinates
-(remember that we *chose* `system = "RAS"` above), things are different
-with `aligned_volume`, the voxel data representation whose axes are
-more or less aligned with our chosen world coordinate system's axes: the
-world coordinate system's origin does *not* lie at the voxel index
-`volume.aligned_volume[0, 0, 0]`. Indeed, as `aligned_volume`'s voxel
-index along axis 0 should increase when moving to the right of the
-patient (rather than to their left as in the `src_system`), and its
-index along axis 1 should increase when moving to the patient's front
-(rather than their back), the origin must now lie at the greatest voxel
-index along these two axes, which is index 9:
+(remember that we *chose* `system=our_world="RAS"` above), things are
+different with `aligned_volume`, the voxel data representation whose
+axes are more or less aligned with our chosen world coordinate system's
+axes: the world coordinate system's origin does *not* lie at
+`aligned_volume`'s voxel index `[0, 0, 0]`. Indeed, as
+`aligned_volume`'s voxel indices along axis 0 should increase when
+moving to the right of the patient (rather than to their left like in
+`src_system`, which is "LPS"), and its indices along axis 1 should
+increase when moving to the patient's front (rather than their back),
+the origin must now lie at the greatest voxel index along these two
+axes, which is index 9 (recall that the voxel data shape is
+`(10, 10, 10)`):
 ```python
-print(volume.aligned_transformation @ [9, 9, 0, 1])
-# [0 0 0 1]
+voxels2world = volume.aligned_transformation
+world2voxels = np.linalg.inv(voxels2world)
+voxel_index_of_world_origin = world2voxels[:3] @ world_origin
+print(voxel_index_of_world_origin)
+# [9. 9. 0.]
 ```
 We can easily check that the voxel data at the world coordinate origin
 remains the same in `aligned_volume` as in `src_volume`:
@@ -146,35 +167,37 @@ remains the same in `aligned_volume` as in `src_volume`:
 print(volume.src_volume[0, 0, 0] == volume.aligned_volume[9, 9, 0])
 # True
 ```
-This is reflected in the translational part of `aligned_transformation`
--- in order to get from voxel indices to world coordinates, we must
-subtract 9 in voxel axis 0 and 1:
+This index shift is reflected in the translational part of
+`aligned_transformation` -- in order to get from `aligned_volume`'s
+voxel indices to "RAS" world coordinates, we must subtract 9 in voxel
+axis 0 and 1:
 ```python
 print(volume.aligned_transformation)
-# [[1 0 0 -9]
-#  [0 1 0 -9]
-#  [0 0 1  0]
-#  [0 0 0  1]]
+# [[ 1.  0.  0. -9.]
+#  [ 0.  1.  0. -9.]
+#  [ 0.  0.  1.  0.]
+#  [ 0.  0.  0.  1.]]
 ```
 Thus, in case an axis direction is swapped (e.g. from "L" to "R") the
 world coordinate system's origin will remain in the same voxel position.
-However, as `aligned_volume`'s respective voxel axis will also be
-swapped, the resulting transformation matrix may look hugely different.
+However, as the voxel position will also change (with the respective
+voxel axis being reversed), the resulting transformation matrix may look
+hugely different.
 
 As `src_transformation` is an identity matrix and as both anatomical
 world coordinate systems have the same order of axes (first axis:
-left-right, second axis: anterior-posterior, third axis:
-superior-inferior) the mapping from `src_volume` to our choice of world
+left--right, second axis: anterior--posterior, third axis:
+superior--inferior) the mapping from `src_volume` to our choice of world
 coordinate system, which is provided via
 `src_to_aligned_transformation`, *almost* remains an identity matrix as
 well. However, as the first two axes are flipped, we find a -1 rather
 than a 1 there:
 ```python
 print(volume.src_to_aligned_transformation)
-# [[-1  0 0 0]
-#  [ 0 -1 0 0]
-#  [ 0  0 1 0]
-#  [ 0  0 0 1]]
+# [[-1.  0.  0.  0.]
+#  [ 0. -1.  0.  0.]
+#  [ 0.  0.  1.  0.]
+#  [ 0.  0.  0.  1.]]
 ```
 
 If we wish to do so, we may now choose an "exotic" anatomical world
@@ -182,32 +205,36 @@ coordinate system, and everything will be adjusted accordingly:
 ```python
 volume.system = "IAR"
 
-print(volume.aligned_transformation @ [9, 9, 9, 1])
-# [0 0 0 1]
-
-print(volume.src_volume[0, 0, 0] == volume.aligned_volume[9, 9, 9])
-# True
+voxels2world = volume.aligned_transformation
+world2voxels = np.linalg.inv(voxels2world)
+voxel_index_of_world_origin = world2voxels[:3] @ world_origin
+print(voxel_index_of_world_origin)
+# [9. 9. 9.]
 
 print(volume.aligned_transformation)
-# [[1 0 0 -9]
-#  [0 1 0 -9]
-#  [0 0 1 -9]
-#  [0 0 0  1]]
+# [[ 1.  0.  0 -9.]
+#  [ 0.  1.  0 -9.]
+#  [ 0.  0.  1 -9.]
+#  [ 0.  0.  0  1.]]
 ```
 
-As we now both swapped all coordinate axes and reversed the order of
+As we now swapped all coordinate axes *and* reversed the order of
 axes compared to our identity transformation matrix
 `src_transformation`, the rotational part of the mapping
 `src_to_aligned_transformation` is now a flipped, negated identity
 matrix:
 ```python
 print(volume.src_to_aligned_transformation)
-# [[ 0  0 -1 0]
-#  [ 0 -1  0 0]
-#  [-1  0  0 0]
-#  [ 0  0  0 1]]
+# [[ 0.  0. -1.  0.]
+#  [ 0. -1.  0.  0.]
+#  [-1.  0.  0.  0.]
+#  [ 0.  0.  0.  1.]]
 ```
-
+Still, the voxel data is correctly moving along:
+```python
+print(volume.src_volume[0, 0, 0] == volume.aligned_volume[9, 9, 9])
+# True
+```
 
 Loading Images
 --------------
