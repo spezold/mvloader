@@ -98,7 +98,7 @@ from mvloader.volume import Volume
 given_voxels = np.arange(1000).reshape(10, 10, 10)
 # No rotations or translations from the provided voxel indices to the
 # provided anatomical world coordinate system ...
-voxels2given_world = np.eye(4)
+given_voxels2given_world = np.eye(4)
 # ... which we assume is DICOM-style ("LPS")
 given_world = "LPS"
 # However, as we prefer to work with NIfTI-style world coordinates, our
@@ -106,11 +106,11 @@ given_world = "LPS"
 our_world = "RAS"
 
 volume = Volume(src_voxel_data=given_voxels,
-                src_transformation=voxels2given_world,
+                src_transformation=given_voxels2given_world,
                 src_system=given_world,
                 system=our_world)
 ```
-In a real application, Both `src_transformation` and `src_system` are
+In a real application, both `src_transformation` and `src_system` are
 usually not our choice, but the result of loading a particular image of
 a particular format (see *Loading Images* below). In our example, by
 setting `src_transformation` to an identity matrix, we know that the
