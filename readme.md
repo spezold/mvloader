@@ -1,14 +1,29 @@
 MVloader
 ========
 
-`MVloader` is meant to be a tiny helper to load and save *medical
+*MVloader* is meant to be a tiny helper to load and save *medical
 volumetric* data (therefore *MV*) or *image volumes*, i.e.
 three-dimensional medical images (DICOM, NIfTI, or NRRD). It is also
-meant to simplify dealing with different anatomical world coordinate
-systems.
+meant to simplify dealing with their different anatomical world
+coordinate systems.
 
-`MVloader`'s only dependencies are the underlying image libraries
-(`pydicom`, `nibabel`, `pynrrd`) and `NumPy`.
+
+Installing MVloader
+-------------------
+
+*MVloader* can be installed using *pip*:
+```shell
+pip install git+https://github.com/spezold/mvloader.git
+```
+
+This should also work inside *conda*.
+
+*MVloader*'s only dependencies are the underlying image libraries
+([*pydicom*](https://github.com/pydicom/pydicom),
+[*nibabel*](http://nipy.org/nibabel/),
+[*pynrrd*](https://github.com/mhe/pynrrd)) and
+[*NumPy*](http://www.numpy.org/), which should all be resolved
+automatically during installation.
 
 
 The `Volume` Class
@@ -236,6 +251,7 @@ print(volume.src_volume[0, 0, 0] == volume.aligned_volume[9, 9, 9])
 # True
 ```
 
+
 Loading Images
 --------------
 
@@ -353,3 +369,20 @@ vice versa). Thus, if an unsupported system is detected,
 
 For more options, see the documentation of the respective `save_*`
 functions.
+
+
+History
+-------
+
+### (2018-02-15)
+
+*MVloader* resulted from my PhD work. The different parts grew between
+2011 and now, as part of my actual, still unreleased PhD project
+(*cordial* -- the cord image analyzer) and should work pretty stable by
+now. I decided to make *MVloader* a self-contained package, as I thought
+it might be helpful to others who also struggle with loading medical
+image volumes and handling their coordinate systems. Before uploading, I
+ported everything from Python 2 to Python 3.5+, adjusted namings, and
+expanded the documentation. I hope I did not introduce any bugs on the
+way (a test suite is unfortunately still missing) -- if you find any,
+please let me know.
