@@ -365,7 +365,8 @@ anatomical world coordinate system; if `False`, the function will try to
 use `volume.system` instead. Why *try to*? Because not all coordinate
 system's supported by `Volume` are supported by the NRRD format (and
 vice versa). Thus, if an unsupported system is detected,
-`nrrd.save_volume` will silently use "RAS".
+`nrrd.save_volume` will silently use "RAS" -- with a correctly adjusted
+transformation matrix, of course.
 
 For more options, see the documentation of the respective `save_*`
 functions.
