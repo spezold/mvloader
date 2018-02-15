@@ -218,7 +218,7 @@ class SliceStacker:
         pos_end = np.asarray(slices[-1][SliceStacker.POS_TAG].value)
         s = (pos_end - pos_0) / (n - 1)
         mat[:3, 2] = s
-        # Actually stack the slices, then create a new <Volume> instance (use `(r, c, s)` indices, see above)
+        # Actually stack the slices, then create a new ``Volume`` instance (use `(r, c, s)` indices, see above)
         stack = np.empty((slice_ref[SliceStacker.ROWS_TAG].value, slice_ref[SliceStacker.COLS_TAG].value, n))
         for i in range(n):
             stack[:,:,i] = slices[i].pixel_array
