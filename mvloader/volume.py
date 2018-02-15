@@ -119,7 +119,7 @@ class Volume:
         perm = anatomical_coords.find_closest_permutation_matrix(self.__vsrc2csrc[:3, :3])
         vsrc2vuser3 = self.__csrc2cuser @ perm
         # Make it a 4x4 matrix
-        vsrc2vuser4 = self.__vsrc2vdst_4x4(vsrc2vuser3, self.src_volume.shape)
+        vsrc2vuser4 = Volume.__vsrc2vdst_4x4(vsrc2vuser3, self.src_volume.shape)
         vuser2vsrc4 = np.round(np.linalg.inv(vsrc2vuser4)).astype(vsrc2vuser4.dtype)
 
         anatomical_coords.validate_permutation_matrix(vsrc2vuser4[:3, :3])  # Just to be sure ...
