@@ -169,8 +169,8 @@ print(volume.src_volume[0, 0, 0] == volume.aligned_volume[9, 9, 0])
 ```
 This index shift is reflected in the translational part of
 `aligned_transformation` -- in order to get from `aligned_volume`'s
-voxel indices to "RAS" world coordinates, we must subtract 9 in voxel
-axis 0 and 1:
+voxel indices to "RAS" world coordinates, we must subtract 9 in
+coordinate axis 0 and 1:
 ```python
 print(volume.aligned_transformation)
 # [[ 1.  0.  0. -9.]
