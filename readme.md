@@ -3,17 +3,19 @@ MVloader
 
 *MVloader* is meant to be a tiny helper to load and save *medical
 volumetric* data (therefore *MV*) or *image volumes*, i.e.
-three-dimensional medical images (DICOM, NIfTI, or NRRD). It is also
-meant to simplify dealing with their different anatomical world
-coordinate systems.
+three-dimensional medical images (DICOM, NIfTI, or NRRD) in Python 3.5+.
+It is also meant to simplify dealing with their different anatomical
+world coordinate systems.
 
 
 Installing MVloader
 -------------------
 
-*MVloader* can be installed using *pip*:
+*MVloader* can be installed using *pip* or *pip3*, depending on your
+system:
 ```shell
 pip install git+https://github.com/spezold/mvloader.git
+pip3 install git+https://github.com/spezold/mvloader.git
 ```
 
 This should also work inside *conda*.
