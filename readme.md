@@ -86,6 +86,12 @@ respective position `[x, y, z]` in world coordinates:
 x, y, z = M[:3] @ homogeneous([i, j, k])
 ```
 
+Note that, as mentioned, we had to use homogeneous coordinates for the
+transformation, which explains why we append 1 for the world origin's
+coordinate; however, by using only the first three rows of the
+transformation matrix `world2voxels`, our resulting voxel index contains
+only three values, as one could expect.
+
 ### … in terms of the patient?
 
 What so far remains open, is, what does `[x, y, z]` stand for? We may
@@ -273,12 +279,6 @@ voxel_index_of_world_origin = world2voxels[:3] @ world_origin
 print(voxel_index_of_world_origin)
 # [0. 0. 0.]
 ```
-
-Note that we had to use homogeneous coordinates for the transformation,
-which explains why we append 1 for the world origin's coordinate;
-however, by using only the first three rows of the transformation matrix
-`world2voxels`, our resulting voxel index contains only three values, as
-one could expect.
 
 As we chose the voxel data as `np.arange(1000).reshape(10, 10, 10)`, the
 value at voxel index `[0, 0, 0]` is zero. As voxel index `[0, 0, 0]`
