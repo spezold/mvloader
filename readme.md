@@ -134,8 +134,8 @@ A remaining open issue is a more practical one: what if we want to
 display or process an image volume in a certain anatomical orientation?
 Say, we want to display axial slices of the patient or apply a certain image
 filter along its left-right axis -- do we always have to consult the
-mapping `M` from voxel indices to world coordinates (or its inverse) in
-order to find the right voxel indices?
+mapping `M` from voxel indices to world coordinates (or rather, its
+inverse) in order to find the right voxel indices?
 
 Theoretically, indeed we have to do this: notice that a definition like
 "LPS" does *not* tell us that the first *voxel index* increases from the
