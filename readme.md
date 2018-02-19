@@ -147,15 +147,15 @@ LPS means moving towards the patient's head):
 i, j, k = 1, 0, 0
 x, y, z = M[:3] @ homogeneous([i, j, k])
 print("x={}, y={}, z={}".format(x, y, z))
-# x=0, y=0 z=1
+# x=0, y=0, z=1
 ```
 But couldn't we rearrange the voxel array, aligning it with the world
 coordinate system so that we can be sure increasing voxel index `i`
-indeed always means moving to the patient's right side (for a RAS world)
-or left side (for an LPS world)? We can -- precisely, if the rotational
-part of `M` contains zeros, ones, and minus ones only; approximately, if
-it contains arbitrary rotations. And that is where the `Volume` class
-comes into play.
+indeed always means moving to the patient's right side (for an RAS
+world) or left side (for an LPS world)? We can -- precisely, if the
+rotational part of `M` contains zeros, ones, and minus ones only;
+approximately, if it contains arbitrary rotations. And that is where the
+`Volume` class comes into play.
 
 The `Volume` Class
 ------------------
