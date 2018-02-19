@@ -86,10 +86,10 @@ x, y, z = M[:3] @ homogeneous([i, j, k])
 ```
 
 Note that, as mentioned, we had to use homogeneous coordinates for the
-transformation, which explains why we append 1 for the world origin's
+transformation, which explains why we append 1 for the voxel index's
 coordinate; however, by using only the first three rows of the
-transformation matrix `M`, our resulting voxel index contains only three
-values, as one could expect.
+transformation matrix `M`, our resulting world coordinate `[x, y, z]`
+consists of only three values, as one would expect.
 
 ### … in terms of the patient?
 
