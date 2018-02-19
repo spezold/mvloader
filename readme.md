@@ -88,11 +88,12 @@ x, y, z = M[:3] @ homogeneous([i, j, k])
 
 ### … in terms of the patient?
 
-What remains open, is, what does `[x, y, z]` stand for? We may now have
-a value in millimeters (or whatever world units are assumed/defined),
-but we still do not know what the value means in terms of the imaged
-patient's *anatomy*. For this reason, medical image formats define the
-world coordinate system's axes relative to the patient's body axes:
+What so far remains open, is, what does `[x, y, z]` stand for? We may
+well have a value in millimeters (or whatever world units are
+assumed/defined) by now, but we still do not know what the value means
+in terms of the imaged patient's *anatomy*. For this reason, medical
+image formats define the world coordinate system's axes relative to the
+patient's body axes:
 
 * one world axis points along the patient's left-right axis and
   therefore its value increases when moving from the patient's left side
@@ -124,9 +125,9 @@ anatomy.
 
 ### How can we simplify this in practice?
 
-Another open issue is a more practical one: what if we want to display
-or process an image volume in a certain anatomical orientation? Say,
-we want to display axial slices of the patient or apply a certain image
+A remaining open issue is a more practical one: what if we want to
+display or process an image volume in a certain anatomical orientation?
+Say, we want to display axial slices of the patient or apply a certain image
 filter along its left-right axis -- do we always have to consult the
 mapping `M` from voxel indices to world coordinates (or its inverse) in
 order to find the right voxel indices?
