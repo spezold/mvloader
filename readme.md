@@ -111,10 +111,10 @@ patient's body axes:
   their feet -- or vice versa.
 
 This may be encapsulated in a definition like "left-posterior-superior
-(LPS)" or "right-anterior-superior (RAS)". In the first case, this means
+(LPS)" or "right-anterior-superior (RAS)". In the "RAS" case, this means
 "`x` increases to the left (*L*), `y` increases to the back (*P* as in
 *posterior*), `z` increases to the head (*S* as in *superior*)"; in the
-second case, this means "`x` increases to the right (*R*), `y` increases
+"LPS" case, this means "`x` increases to the right (*R*), `y` increases
 to the front (*A* as in *anterior*), `z` increases to the head (*S* as
 in *superior*)". Such a definition of mapping from
 world coordinate system axes to the patient's anatomy is either
