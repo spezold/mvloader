@@ -162,8 +162,8 @@ approximately, if it contains arbitrary rotations. And that is where the
 The `Volume` Class
 ------------------
 
-All loaded image volumes are represented as instances of the `Volume`
-class.
+`MVloader` represents all loaded image volumes as instances of the
+`Volume` class.
 
 `Volume` serves as an abstraction layer to handle transformations from
 voxel indices to arbitrary anatomical world coordinate systems. In
