@@ -106,10 +106,11 @@ world coordinate system's axes relative to the patient's body axes:
 
 This may be encapsulated in a definition like "left-posterior-superior
 (LPS)" or "right-anterior-superior (RAS)". In the first case, this means
-"`x` increases to the left, `y` increases to the back (posterior),
-`z` increases to the head (superior)"; in the second case, this means
-"`x` increases to the right, `y` increases to the front (anterior), `z`
-increases to the head (superior)". Such a definition of mapping from
+"`x` increases to the left (*L*), `y` increases to the back (*P* as in
+*posterior*), `z` increases to the head (*S* as in *superior*)"; in the
+second case, this means "`x` increases to the right (*R*), `y` increases
+to the front (*A* as in *anterior*), `z` increases to the head (*S* as
+in *superior*)". Such a definition of mapping from
 world coordinate system axes to the patient's anatomy is either
 implicitly assumed by a particular image format
 (for example, DICOM uses LPS, NIfTI uses RAS) or explicity stored in the
