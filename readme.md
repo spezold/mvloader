@@ -300,7 +300,8 @@ coordinate system's axes: the world coordinate system's origin does
 moving to the right of the patient (rather than to their left like in
 `src_system`, which is "LPS"), and its indices along axis 1 should
 increase when moving to the patient's front (rather than their back),
-the origin must now lie at the greatest voxel index along these two
+while the origin should still mark the same voxel (the one with value
+0), the origin must now lie at the greatest voxel index along these two
 axes, which is index 9 (recall that the voxel data shape is
 `(10, 10, 10)`):
 ```python
