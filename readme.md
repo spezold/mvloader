@@ -65,11 +65,9 @@ crucial for medical applications.
 Medical image formats therefore provide a mapping from voxel indices
 to a patient-based world coordinate system: Via rotation, scaling, and
 translation, we may map from voxel indices to patient coordinates.
-Using homogeneous coordinates, we can store this mapping in a `4x4`
+Using homogeneous coordinates, we can store this mapping in a *4x4*
 matrix `M`:
 ```python
-homogeneous = lambda c3d: np.r_[c3d, 1]  # append 1 to 3D coordinate
-
 r_11, r_12, r_13, r_21, r_22, r_23, r_31, r_32, r_33 = ...  # rotation
 s_i, s_j, s_k = ...  # scaling (world units per voxel)
 t_x, t_y, t_z = ...  # translation (world units)
@@ -83,6 +81,7 @@ M = np.asarray(M)
 We may now use `M` to find for each voxel index `[i, j, k]` its
 respective position `[x, y, z]` in world coordinates:
 ```python
+homogeneous = lambda c3d: np.r_[c3d, 1]  # append 1 to 3D coordinate
 x, y, z = M[:3] @ homogeneous([i, j, k])
 ```
 
