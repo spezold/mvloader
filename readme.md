@@ -51,7 +51,7 @@ i, j, k = 9, 9, 9
 print(voxel_data_array[i, j, k])
 # 1.0
 ```
-The call of `print(voxel_data_array[0, 0, 0])` simply tells us we have a
+The call of `print(voxel_data_array[i, j, k])` simply tells us we have a
 value of zero in the `[0, 0, 0]` corner of the image cube, a value of
 1 in the `[9, 9, 9]` corner, and so on.
 
