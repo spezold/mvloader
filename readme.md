@@ -28,6 +28,135 @@ This should also work inside *conda*.
 automatically during installation.
 
 
+Motivation: Voxel Indices, World Coordinates, and Patient Anatomy
+-----------------------------------------------------------------
+
+When dealing with medical image volumes, one must realize that they live
+in two different worlds: their *voxel space* and a *world coordinate
+system*, the latter of which has an attached *anatomical meaning*.
+
+### What does a voxel index stand for …
+
+The voxel space very unsurprisingly tells us what image intensity is
+stored is in what sampling position of the volume: Say, we have a
+three-dimensional array ``voxel_data_array`` that contains our image
+volume:
+```python
+import numpy as np
+voxel_data_array = np.linspace(0, 1, num=1000).reshape(10, 10, 10)
+i, j, k = 0, 0, 0
+print(voxel_data_array[i, j, k])
+# 0.0
+i, j, k = 9, 9, 9
+print(voxel_data_array[i, j, k])
+# 1.0
+```
+The call of `print(voxel_data_array[0, 0, 0])` simply tells us we have a
+value of zero in the `[0, 0, 0]` corner of the image cube, a value of
+1 in the `[9, 9, 9]` corner, and so on.
+
+### … in terms of the physical world?
+
+What the
+voxel index `[i, j, k]` does *not* tell us, is, where in the imaged
+patient (or healthy subject) we found this value. This, however, may be
+crucial for medical applications.
+
+Medical image formats therefore provide a mapping from voxel indices
+to a patient-based world coordinate system: Via rotation, scaling, and
+translation, we may map from voxel indices to patient coordinates.
+Using homogeneous coordinates, we can store this mapping in a `4x4`
+matrix `M`:
+```python
+homogeneous = lambda c3d: np.r_[c3d, 1]  # append 1 to 3D coordinate
+
+r_11, r_12, r_13, r_21, r_22, r_23, r_31, r_32, r_33 = ...  # rotation
+s_i, s_j, s_k = ...  # scaling (world units per voxel)
+t_x, t_y, t_z = ...  # translation (world units)
+
+M = [[r_11 * s_i, r_12 * s_j, r_13 * s_k, t_x],
+     [r_21 * s_i, r_22 * s_j, r_23 * s_k, t_y],
+     [r_31 * s_i, r_32 * s_j, r_33 * s_k, t_z],
+     [         0,          0,          0,   1]]
+M = np.asarray(M)
+```
+We may now use `M` to find for each voxel index `[i, j, k]` its
+respective position `[x, y, z]` in world coordinates:
+```python
+x, y, z = M[:3] @ homogeneous([i, j, k])
+```
+
+### … in terms of the patient?
+
+What remains open, is, what does `[x, y, z]` stand for? We may now have
+a value in millimeters (or whatever world units are assumed/defined),
+but we still do not know what the value means in terms of the imaged
+patient's *anatomy*. For this reason, medical image formats define the
+world coordinate system's axes relative to the patient's body axes:
+
+* one world axis points along the patient's left-right axis and
+  therefore its value increases when moving from the patient's left side
+  to their right side -- or vice versa,
+* one world axis points along the patient's anterior-posterior axis and
+  therefore its value increases when moving from the patient's front to
+  their back -- or vice versa,
+* one world axis points along the patient's superior-inferior axis and
+  therefore its value increases when moving from the patient's head to
+  their feet -- or vice versa.
+
+This may be encapsulated in a definition like "left-posterior-superior
+(LPS)" or "right-anterior-superior (RAS)". In the first case, this means
+"`x` increases to the left, `y` increases to the back (posterior),
+`z` increases to the head (superior)"; in the second case, this means
+"`x` increases to the right, `y` increases to the front (anterior), `z`
+increases to the head (superior)". Such a definition of mapping from
+world coordinate system axes to the patient's anatomy is either
+implicitly assumed by a particular image format
+(for example, DICOM uses LPS, NIfTI uses RAS) or explicity stored in the
+image volume's meta information (NRRD defines the *space* field in its
+header for that purpose). Notice we still don't know where we are
+*absolutely* positioned within the patient (the origin of the coordinate
+system is usually defined with respect to some point in the imaging
+modality, as far as I know), but at least we now have a *relative*
+understanding of what a voxel index means with respect to the patient's
+anatomy.
+
+### How can we simplify this in practice?
+
+Another open issue is a more practical one: what if we want to display
+or process an image volume in a certain anatomical orientation? Say,
+we want to display axial slices of the patient or apply a certain image
+filter along its left-right axis -- do we always have to consult the
+mapping `M` from voxel indices to world coordinates (or its inverse) in
+order to find the right voxel indices?
+
+Theoretically, indeed we have to do this: notice that a definition like
+"LPS" does *not* tell us that the first *voxel index* increases from the
+patient's right to their left. For example, if our transformation matrix
+`M` looks something like:
+```python
+M = np.asarray([[0, 0, 1, 0],
+                [0, 1, 0, 0],
+                [1, 0, 0, 0],
+                [0, 0, 0, 1]])
+```
+then voxel index `i` will actually increase with the `z` coordinate of
+the world coordinate system (which, remember, in the case of RAS and
+LPS means moving towards the patient's head):
+```python
+i, j, k = 1, 0, 0
+x, y, z = M[:3] @ homogeneous([i, j, k])
+print("x={}, y={}, z={}".format(x, y, z))
+# x=0, y=0 z=1
+```
+But couldn't we rearrange the voxel array, aligning it with the world
+coordinate system so that we can be sure increasing voxel index `i`
+indeed always means moving to the patient's right side (for a RAS world)
+or left side (for an LPS world)? We can -- precisely, if the rotational
+part of `M` contains zeros, ones, and minus ones only; approximately, if
+it contains arbitrary rotations. And that is where the `Volume` class
+comes into play.
+
 The `Volume` Class
 ------------------
 
@@ -45,51 +174,48 @@ particular
    with the voxel axes aligned as closely as possible to the user's
    choice of anatomical world coordinate system. This representation
    simplifies visualizing volumes in *almost* correct anatomical
-   orientation and processing data differently and consistently along
-   different body axes. The `aligned_volume` representation is therefore
-   suitable for cases in which one is not interested in a *precise*
-   alignment, which, in turn, would generally require an expensive
-   interpolation of the voxel data.
+   orientation (see above) and processing data differently and
+   consistently along different body axes.
 
-### Voxel Data Representations
+### Voxel data representations
 
 Each `Volume` instance provides two representations of the image
 volume's voxel data as three-dimensional NumPy arrays:
 
-*  `src_volume` provides the voxels in the same order as they have been
-   returned by the underlying image library.
-*  `aligned_volume` provides the voxels with their axes aligned as
-   closely as possible to the anatomical world coordinate system that
-   has been chosen by the user. For example, if the user chooses an
-   "LPS" anatomical world coordinate system (meaning that the first
-   coordinate axis will point to the patient's left side, the second
-   axis will point to their back, and the third will point towards their
-   head), then `aligned_volume[1, 0, 0]` will lie to the left of
-   `aligned_volume[0, 0, 0]`, `aligned_volume[0, 1, 0]` will lie closer
-   to the patient's back, and `aligned_volume[0, 0, 1]` will lie closer
-   to their head.
+* `src_volume` provides the voxels in the same order as they have been
+  returned by the underlying image library.
+* `aligned_volume` provides the voxels with their axes aligned as
+  closely as possible to the anatomical world coordinate system that
+  has been chosen by the user. For example, if the user chooses an
+  "LPS" anatomical world coordinate system (meaning that the first
+  coordinate axis will point to the patient's left side, the second
+  axis will point to their back, and the third will point towards their
+  head), then `aligned_volume[1, 0, 0]` will lie to the left of
+  `aligned_volume[0, 0, 0]`, `aligned_volume[0, 1, 0]` will lie closer
+  to the patient's back, and `aligned_volume[0, 0, 1]` will lie closer
+  to their head.
 
-### Transformation Matrix Representations
+### Transformation matrix representations
 
 Each `Volume` instance provides three 4x4 transformation matrices to map
 from voxel indices to anatomical world coordinates:
 
-*  `src_transformation` maps from `src_volume`'s voxel indices to the
-   world coordinate system that has been assumed by the underlying image
-   format (which is provided via `Volume`'s `src_system` property).
-*  `aligned_transformation` maps from `aligned_volume`'s voxel indices
-   to the world coordinate system that has been chosen by the user
-   (which is provided via `Volume`'s `system` property).
-*  `src_to_aligned_transformation` maps from `src_volume`'s voxel
-   indices to the world coordinate system that has been chosen by the
-   user (namely `system`).
+* `src_transformation` maps from `src_volume`'s voxel indices to the
+  world coordinate system that has been assumed by the underlying image
+  format (which is provided via `Volume`'s `src_system` property).
+* `aligned_transformation` maps from `aligned_volume`'s voxel indices
+  to the world coordinate system that has been chosen by the user
+  (which is provided via `Volume`'s `system` property).
+* `src_to_aligned_transformation` maps from `src_volume`'s voxel
+  indices to the world coordinate system that has been chosen by the
+  user (namely `system`).
 
 Apart from that, the mappings from `src_volume` and `aligned_volume` to
 arbitrary anatomical world coordinate systems can be determined via
 `Volume`'s methods `get_src_transformation()` and
 `get_aligned_transformation()`.
 
-### Choosing a World Coordinate System
+### Choosing a world coordinate system
 
 By default, all `Volume` instances are created so that the user-chosen
 anatomical world coordinate system is "RAS". This may be adjusted via
@@ -104,14 +230,14 @@ string. Any update of `system` will update the `aligned_volume` voxel
 data, the respective voxel size information, and the transformation
 matrices accordingly.
 
-### An Example
+### An example
 
 We create a new `Volume` instance:
 ```python
 import numpy as np
 from mvloader.volume import Volume
 
-# A simple 10x10x10 volume
+# Create a simple 10x10x10 volume
 given_voxels = np.arange(1000).reshape(10, 10, 10)
 # No rotations or translations from the provided voxel indices to the
 # provided anatomical world coordinate system ...
@@ -134,16 +260,20 @@ setting `src_transformation` to an identity matrix, we know that the
 `src_system`'s world coordinate origin must lie at voxel index
 `[0, 0, 0]`, which we can easily check:
 ```python
+homogeneous = lambda c3d: np.r_[c3d, 1]  # append 1 to 3D coordinate
+
 voxels2world = volume.src_transformation
 world2voxels = np.linalg.inv(voxels2world)
-world_origin = [0, 0, 0, 1]
+
+world_origin = homogeneous([0, 0, 0])
 voxel_index_of_world_origin = world2voxels[:3] @ world_origin
+
 print(voxel_index_of_world_origin)
 # [0. 0. 0.]
 ```
 
 Note that we had to use homogeneous coordinates for the transformation,
-which explains the trailing 1 for the world origin's coordinate;
+which explains why we append 1 for the world origin's coordinate;
 however, by using only the first three rows of the transformation matrix
 `world2voxels`, our resulting voxel index contains only three values, as
 one could expect.
@@ -257,7 +387,7 @@ print(volume.src_volume[0, 0, 0] == volume.aligned_volume[9, 9, 9])
 Loading Images
 --------------
 
-### Loading and Stacking DICOM Images
+### Loading and stacking DICOM images
 
 Loading DICOM files requires the `pydicom` package. Currently, loading
 multiple files with 2D slices that together form a 3D volume is
@@ -287,7 +417,7 @@ only meaningful way of stacking DICOM files.
 
 For more options, see the documentation of the `mvloader.dicom` module.
 
-### Loading NIfTI Images
+### Loading NIfTI images
 
 Loading NIfTI files requires the `nibabel` package. Currently, loading
 3D volumes (both `.nii` and `.nii.gz`) is supported.
@@ -298,19 +428,19 @@ volume = nifti.open_image("/foo/bar.nii")
 ```
 For more options, see the documentation of the `mvloader.nifti` module.
 
-### Loading NRRD Images
+### Loading NRRD images
 
 Loading NRRD files requires the `pynrrd` package. Currently, loading 3D
 volumes with scalar data and with a defined patient-based coordinate
 system is supported. This means that
 
-*  the NRRD header's *space*, *space directions*, and *space origin*
-   fields must be present, and
-*  the *space* field's value must be *right-anterior-superior*,
-   *left-anterior-superior*, *left-posterior-superior*, *RAS*, *LAS*, or
-   *LPS*. Furthermore,
-*  if the *kinds* field is present, all of its entries must be either
-   *domain* or *space*.
+* the NRRD header's *space*, *space directions*, and *space origin*
+  fields must be present, and
+* the *space* field's value must be "right-anterior-superior",
+  "left-anterior-superior", "left-posterior-superior", "RAS", "LAS", or
+  "LPS". Furthermore,
+* if the *kinds* field is present, all of its entries must be either
+  "domain" or "space".
 
 To load the file `/foo/bar.nrrd` into a `Volume` instance, call:
 ```python
@@ -325,11 +455,11 @@ Saving Images
 Saving DICOM images is currently not supported (and most likely won't be
 in the foreseeable future).
 
-### Saving NIfTI and NRRD Images
+### Saving NIfTI and NRRD images
 
 Saving NIfTI and NRRD images works pretty much the same.
 
-#### Saving NumPy Array Data
+#### Saving NumPy array data
 If the voxel data is present as a NumPy array, one might use
 `save_image`:
 ```python
@@ -346,7 +476,7 @@ However, as the NRRD format allows to specify other coordinate systems,
 used to specify a different anatomical world coordinate system for the
 saved image.
 
-#### Saving `Volume` Instance Data
+#### Saving `Volume` instance data
 
 If the image data is available as a `Volume` instance, one might prefer
 using `save_volume`:
