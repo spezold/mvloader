@@ -38,7 +38,7 @@ system*, the latter of which has an attached *anatomical meaning*.
 ### What does a voxel index stand for …
 
 The voxel space very unsurprisingly tells us what image intensity is
-stored is in what sampling position of the volume: Say, we have a
+stored in what sampling position of the volume: Say, we have a
 three-dimensional array ``voxel_data_array`` that contains our image
 volume:
 ```python
