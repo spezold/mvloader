@@ -291,7 +291,7 @@ print(volume.src_volume[voxel_index_of_world_origin])
 
 Now, as we seem to prefer working with RAS rather than LPS coordinates
 (remember that we *chose* `system=our_world` with `our_world="RAS"`
-above), things are different with `aligned_volume`, the voxel data
+above), things are different with `aligned_volume`, which is the voxel data
 representation whose axes are more or less aligned with our chosen world
 coordinate system's axes: the world coordinate system's origin does
 *not* lie at `aligned_volume`'s voxel index `[0, 0, 0]`. Indeed, as
