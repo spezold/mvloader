@@ -132,7 +132,8 @@ anatomy.
 
 A remaining open issue is a more practical one: what if we want to
 display or process an image volume in a certain anatomical orientation?
-Say, we want to display axial slices of the patient or apply a certain image
+Say, we want to display axial slices of the patient (i.e. slices
+perpendicular to their superior–inferior axis) or apply a certain image
 filter along its left-right axis – do we always have to consult the
 mapping `M` from voxel indices to world coordinates (or rather, its
 inverse) in order to find the necessary voxel indices?
