@@ -331,9 +331,9 @@ class Volume:
         Parameters
         ----------
         deep : bool, optional
-            If True (default), a copy of the ``src_volume`` Numpy array will be created for the new instance; if False,
-            the array will be shared by both instances. In either case, (1) ``src_object`` will be shared by both
-            instances and (2) the transformation matrices will be copies for the new instance.
+            If `True` (default), a copy of the ``src_volume`` Numpy array will be created for the new instance; if
+            `False`, the array will be shared by both instances. In either case, (1) ``src_object`` will be shared by
+            both instances and (2) the transformation matrices will be copies for the new instance.
 
         Returns
         -------
