@@ -100,15 +100,15 @@ in terms of the imaged patient's *anatomy*. For this reason, medical
 image formats define the world coordinate system's axes relative to the
 patient's body axes:
 
-* one world axis points along the patient's left-right axis and
+* one world axis points along the patient's *left–right* axis and
   therefore its value increases when moving from the patient's left side
-  to their right side -- or vice versa,
-* one world axis points along the patient's anterior-posterior axis and
+  to their right side – or vice versa,
+* one world axis points along the patient's *anterior–posterior* axis and
   therefore its value increases when moving from the patient's front to
-  their back -- or vice versa,
-* one world axis points along the patient's superior-inferior axis and
+  their back – or vice versa,
+* one world axis points along the patient's *superior–inferior* axis and
   therefore its value increases when moving from the patient's head to
-  their feet -- or vice versa.
+  their feet – or vice versa.
 
 This may be encapsulated in a definition like "left-posterior-superior
 (LPS)" or "right-anterior-superior (RAS)". In the "RAS" case, this means
@@ -133,7 +133,7 @@ anatomy.
 A remaining open issue is a more practical one: what if we want to
 display or process an image volume in a certain anatomical orientation?
 Say, we want to display axial slices of the patient or apply a certain image
-filter along its left-right axis -- do we always have to consult the
+filter along its left-right axis – do we always have to consult the
 mapping `M` from voxel indices to world coordinates (or rather, its
 inverse) in order to find the necessary voxel indices?
 
@@ -159,7 +159,7 @@ print("x={}, y={}, z={}".format(x, y, z))
 But couldn't we rearrange the voxel array, aligning it with the world
 coordinate system so that we can be sure increasing voxel index `i`
 indeed always means moving to the patient's right side (for an RAS
-world) or left side (for an LPS world)? We can -- precisely, if the
+world) or left side (for an LPS world)? We can – precisely, if the
 rotational part of `M` contains zeros, ones, and minus ones only;
 approximately, if it contains arbitrary rotations. And that is where the
 `Volume` class comes into play.
@@ -317,7 +317,7 @@ print(volume.src_volume[0, 0, 0] == volume.aligned_volume[9, 9, 0])
 # True
 ```
 This index shift is reflected in the translational part of
-`aligned_transformation` -- in order to get from `aligned_volume`'s
+`aligned_transformation` – in order to get from `aligned_volume`'s
 voxel indices to "RAS" world coordinates, we must subtract 9 in
 coordinate axis 0 and 1:
 ```python
@@ -335,8 +335,8 @@ transformation matrix may look hugely different.
 
 As `src_transformation` is an identity matrix and as both anatomical
 world coordinate systems have the same order of axes (first axis:
-left--right, second axis: anterior--posterior, third axis:
-superior--inferior) the mapping from `src_volume` to our choice of world
+left–right, second axis: anterior–posterior, third axis:
+superior–inferior) the mapping from `src_volume` to our choice of world
 coordinate system, which is provided via
 `src_to_aligned_transformation`, *almost* remains an identity matrix as
 well. However, as the first two axes are flipped, we find a -1 rather
@@ -414,7 +414,7 @@ Instance UID* with `bar.dcm` will be stacked.
 In both cases, stacking will *not* take the loaded file names into
 account but use the files' position and orientation information (*Image
 Position (Patient)* (0020,0032) and *Image Orientation (Patient)*
-(0020,0037)) to determine their stacking order -- which is, in fact, the
+(0020,0037)) to determine their stacking order – which is, in fact, the
 only meaningful way of stacking DICOM files.
 
 For more options, see the documentation of the `mvloader.dicom` module.
@@ -470,7 +470,7 @@ nrrd.save_image(path, data, transformation, system)
 ```
 Here, `path` is the file path, `data` is the three-dimensional array
 containing the voxel data, and `transformation` is a matrix that maps
-from `data`'s voxel indices to an anatomical world coordinate system --
+from `data`'s voxel indices to an anatomical world coordinate system –
 "RAS" in the case of NIfTI and also by default in the case of NRRD.
 
 However, as the NRRD format allows to specify other coordinate systems,
@@ -499,7 +499,7 @@ anatomical world coordinate system; if `False`, the function will try to
 use `volume.system` instead. Why *try to*? Because not all coordinate
 system's supported by `Volume` are supported by the NRRD format (and
 vice versa). Thus, if an unsupported system is detected,
-`nrrd.save_volume` will silently use "RAS" -- with a correctly adjusted
+`nrrd.save_volume` will silently use "RAS" – with a correctly adjusted
 transformation matrix, of course.
 
 For more options, see the documentation of the respective `save_*`
@@ -513,11 +513,11 @@ History
 
 *MVloader* resulted from my PhD work. The different parts grew between
 2011 and now, as part of my actual, still unreleased PhD project
-(*cordial* -- the cord image analyzer) and should work pretty stable by
+(*cordial* – the cord image analyzer) and should work pretty stable by
 now. I decided to make *MVloader* a self-contained package, as I thought
 it might be helpful to others who also struggle with loading medical
 image volumes and handling their coordinate systems. Before uploading, I
 ported everything from Python 2 to Python 3.5+, adjusted namings, and
 expanded the documentation. I hope I did not introduce any bugs on the
-way (a test suite is unfortunately still missing) -- if you find any,
+way (a test suite is unfortunately still missing) – if you find any,
 please let me know.
