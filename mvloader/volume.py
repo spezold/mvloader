@@ -324,14 +324,24 @@ class Volume:
         result = vsrc2csys @ self.__vuser2vsrc
         return result
 
-    def copy(self):
+    def copy(self, deep=True):
         """
+        Create a shallow(er) or deep(er) copy of the current instance.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            If True (default), a copy of the ``src_volume`` Numpy array will be created for the new instance; if False,
+            the array will be shared by both instances. In either case, (1) ``src_object`` will be shared by both
+            instances and (2) the transformation matrices will be copies for the new instance.
+
         Returns
         -------
         Volume
             A copy of the current instance.
         """
-        return Volume(src_voxel_data=self.__src_volume.copy(), src_transformation=self.__vsrc2csrc.copy(),
+        src_voxel_data = self.__src_volume.copy() if deep else self.__src_volume
+        return Volume(src_voxel_data=src_voxel_data, src_transformation=self.__vsrc2csrc.copy(),
                       src_system=self.__src_system, system=self.__user_system, src_object=self.__src_object)
 
     def copy_like(self, template):
@@ -343,7 +353,9 @@ class Volume:
         ``template`` will be aligned to the same anatomical world coordinate system and then (2) ``template``'s
         alignment process will be inverted on the copy of the current instance. The coordinate systems will only be
         adapted insofar as the direction and order of axes is copied from ``template``, but not the rotations and
-        scalings.
+        scalings. In other words, the permutations and reflections to get from the new copy's voxel indices and
+        template's voxel indices -- in both of their volume representations -- to whatever world coordinate system will
+        afterwards be the same, but not the parts of the rotations that deviate from pure permutation and reflection.
 
         Parameters
         ----------
@@ -355,7 +367,7 @@ class Volume:
         Volume
             A rearranged copy of the current instance.
         """
-        current_instance = self.copy()
+        current_instance = self.copy(deep=False)
 
         # Align the current instance to the same user coordinates as template
         current_instance.system = template.system
