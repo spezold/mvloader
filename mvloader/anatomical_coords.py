@@ -103,6 +103,13 @@ def swap(volume, perm):
     matrix : Function that creates a permutation-reflection matrix.
     validate_permutation_matrix : Check if a given matrix is a valid permutation-reflection matrix.
     """
+
+    # TODO: (1) Add a new parameter here: `copy` -- if True, keep current behaviour (i.e. the result's data is
+    # independent of the given array's data); if False, make the result a view into the given array (i.e. let them share
+    # their data). This needs the use of `ndarray.flip` when inverting the axis (and some more care so as not to change
+    # the given array in the course of transformations). (2) Use `copy=False` when creating the `aligned_volume` in
+    # the `Volume` class.
+
     volume = np.copy(volume)
     ndim = volume.ndim
     perm = perm[:ndim, :ndim]
