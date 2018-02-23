@@ -380,3 +380,5 @@ class Volume:
 
         return Volume(src_voxel_data=src_voxel_data, src_transformation=src_transformation,
                       src_system=template.src_system, system=template.system, src_object=current_instance.src_object)
+
+    # TODO: Add a print method for nice output
