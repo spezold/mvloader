@@ -98,6 +98,12 @@ class TestCreateVolume(unittest.TestCase):
                        src_transformation=np.eye(4),
                        src_system="foo")
 
+        # Wrong source system (one dimension missing)
+        with self.assertRaises(Exception):
+            v = Volume(src_voxel_data=self.data_array,
+                       src_transformation=np.eye(4),
+                       src_system="RA")
+
         # Wrong source system (conflicting characters, one dimension missing)
         with self.assertRaises(Exception):
             v = Volume(src_voxel_data=self.data_array,
@@ -161,6 +167,8 @@ class TestCreateVolume(unittest.TestCase):
         # Same is true for the scalings
         np.testing.assert_array_equal(v.src_spacing, np.ones(3))
         np.testing.assert_array_equal(v.aligned_spacing, np.ones(3))
+
+
 
 
 if __name__ == "__main__":

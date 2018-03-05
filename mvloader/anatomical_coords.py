@@ -195,7 +195,7 @@ def opposites():
 
 def validate_permutation_matrix(perm):
     """
-    Validate a permutation-reflection matrix . A matrix is considered valid if (1) its determinant is either 1 or
+    Validate a permutation-reflection matrix. A matrix is considered valid if (1) its determinant is either 1 or
     -1 and (2) all of its values are either -1, 0, or 1.
 
     Parameters
@@ -215,8 +215,43 @@ def validate_permutation_matrix(perm):
     """
     msg = ""
     if np.abs(np.linalg.det(perm)) != 1:
-        msg = "the matrix determinant is neither -1 nor 1."
+        msg = "the matrix determinant is neither -1 nor 1"
     elif not np.all(np.isin(perm, [-1, 0, 1])):
-        msg = "at least one matrix element is not in {-1, 0, 1}."
+        msg = "at least one matrix element is not in {-1, 0, 1}"
     if msg:
-        raise ValueError("The given matrix is not valid: {}".format(msg))
+        raise ValueError("The given matrix is not valid: {}.".format(msg))
+
+
+def validate_transformation_matrix(mat, tol=1e-3):
+    """
+    Validate a transformation matrix. A :math:`dxd` matrix is considered valid if (1) its :math:`(d-1)x(d-1)` rotational
+    part has a determinant of absolute value close to one, (2) its last row consists of zeros with a trailing one.
+
+    Parameters
+    ----------
+    mat : array_like
+        The (d, d)-shaped Numpy array to be validated.
+    tol : float
+        Tolerance for absolute value `v` of the rotational part's determinant: if :math:`(1 - tol) <= v <= (1 + tol)`,
+        then `v` is considered close to one (default: 1e-3; arbitrary choice).
+
+    Returns
+    -------
+    None
+        Simply return if the matrix is valid.
+
+    Raises
+    ------
+    ValueError
+        If the matrix is invalid.
+    """
+    abs_det = np.abs(np.linalg.det(mat[:-1, :-1]))
+    msg = ""
+    if not ((1 - tol) <= abs_det <= (1 + tol)):
+        msg = "the determinant's absolute value {} is not close to one".format(abs_det)
+    elif np.any(mat[-1, :-1] != 0):
+        msg = "the last row contains non-zero values"
+    elif mat[-1, -1] != 1:
+        msg = "the bottom right value is not one"
+    if msg:
+        raise ValueError("the given matrix is not valid: {}.".format(msg))
