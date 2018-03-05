@@ -79,10 +79,11 @@ class TestCreateVolume(unittest.TestCase):
                        src_transformation=None,
                        src_system="RAS")
 
-        # FIXME: This should raise something
-        v = Volume(src_voxel_data=self.data_array,
-                   src_transformation=np.ones((4, 4)),
-                   src_system="RAS")
+        # Wrong source transformation
+        with self.assertRaises(Exception):
+            v = Volume(src_voxel_data=self.data_array,
+                       src_transformation=np.ones((4, 4)),
+                       src_system="RAS")
 
     def test_wrong_src_system(self):
 

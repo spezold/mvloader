@@ -53,6 +53,7 @@ class Volume:
         self.__user_system = None
 
         # Mapping from ``src_volume``'s voxel indices to the source anatomical coordinate system (4x4 matrix)
+        anatomical_coords.validate_transformation_matrix(src_transformation)
         self.__vsrc2csrc = src_transformation
 
         self.__src_object = src_object
