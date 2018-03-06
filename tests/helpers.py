@@ -38,3 +38,22 @@ def transformation_matrix(angles=(0, 0, 0), scalings=(1, 1, 1), offsets=(0, 0, 0
     transformation[:3, 3] = offsets
 
     return transformation
+
+
+def random_transformation_matrix(verbose=False):
+
+    angles = np.random.uniform(0, 2 * np.pi, size=3)
+    scalings = np.random.exponential(size=3)
+    offsets = np.random.normal(scale=10, size=3)
+
+    transformation = transformation_matrix(angles=angles, scalings=scalings, offsets=offsets)
+    if verbose:
+        print("angles: {}\nscalings: {}\noffsets: {}".format(angles, scalings, offsets))
+
+    return transformation
+
+
+def random_voxel_data(size=(10, 10, 10)):
+
+    voxel_data = np.random.normal(size=size)
+    return voxel_data

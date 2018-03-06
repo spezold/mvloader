@@ -248,7 +248,7 @@ def validate_transformation_matrix(mat, tol=1e-3):
     # Account for potential scaling: dividing by the column's norms leaves us with the pure rotational part
     rot_part = mat[:-1, :-1]
     scaling = np.linalg.norm(rot_part, axis=0)
-    rot_part = rot_part / scaling[:, np.newaxis]
+    rot_part = rot_part * (1 / scaling[:, np.newaxis])
 
     abs_det = np.abs(np.linalg.det(rot_part))
     msg = ""

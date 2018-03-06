@@ -5,7 +5,7 @@ import numpy as np
 import unittest
 
 from mvloader.volume import Volume
-from tests.helpers import transformation_matrix
+from tests.helpers import transformation_matrix, random_transformation_matrix, random_voxel_data
 
 
 class TestCreateVolume(unittest.TestCase):
@@ -79,7 +79,7 @@ class TestCreateVolume(unittest.TestCase):
                        src_transformation=None,
                        src_system="RAS")
 
-        # Wrong source transformation
+        # Wrong source transformation (not a 3D transformation matrix)
         with self.assertRaises(Exception):
             v = Volume(src_voxel_data=self.data_array,
                        src_transformation=np.ones((4, 4)),
@@ -152,6 +152,9 @@ class TestCreateVolume(unittest.TestCase):
         tau = 2 * np.pi
         src_transformation = transformation_matrix(angles=(0.01 * tau, 0.02 * tau, 0.03 * tau))
 
+        # Just make sure that transformation_matrix() is actually not returning the identity matrix
+        self.assertRaises(AssertionError, np.testing.assert_array_equal, src_transformation, np.eye(4))
+
         v = Volume(src_voxel_data=self.data_array,
                    src_transformation=src_transformation,
                    src_system="RAS")
@@ -168,6 +171,24 @@ class TestCreateVolume(unittest.TestCase):
         # Same is true for the scalings
         np.testing.assert_array_equal(v.src_spacing, np.ones(3))
         np.testing.assert_array_equal(v.aligned_spacing, np.ones(3))
+
+    def test_random_values(self):
+
+        # Enter random values for both the transformation matrix and the data array
+        src_transformation = random_transformation_matrix()
+        src_voxel_data = random_voxel_data(size=(9, 10, 11))
+
+        v = Volume(src_voxel_data=src_voxel_data, src_transformation=src_transformation, src_system="ASL")
+
+        np.testing.assert_array_equal(v.src_transformation, src_transformation)
+        np.testing.assert_array_equal(v.src_volume, src_voxel_data)
+
+        # A quick sanity check should give us the same statistics for both volume representations
+        s = v.src_volume
+        a = v.aligned_volume
+        np.testing.assert_array_almost_equal([np.mean(s), np.std(s)], [np.mean(a), np.std(a)])
+
+    # TODO: Continue here: loading sample data (create sample data first), changing coordinate systems, copying
 
 
 
