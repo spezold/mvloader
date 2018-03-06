@@ -245,13 +245,18 @@ def validate_transformation_matrix(mat, tol=1e-3):
     ValueError
         If the matrix is invalid.
     """
-    abs_det = np.abs(np.linalg.det(mat[:-1, :-1]))
+    # Account for potential scaling: dividing by the column's norms leaves us with the pure rotational part
+    rot_part = mat[:-1, :-1]
+    scaling = np.linalg.norm(rot_part, axis=0)
+    rot_part = rot_part / scaling[:, np.newaxis]
+
+    abs_det = np.abs(np.linalg.det(rot_part))
     msg = ""
     if not ((1 - tol) <= abs_det <= (1 + tol)):
         msg = "the determinant's absolute value {} is not close to one".format(abs_det)
     elif np.any(mat[-1, :-1] != 0):
         msg = "the last row contains non-zero values"
     elif mat[-1, -1] != 1:
-        msg = "the bottom right value is not one"
+        msg = "the bottom right value is not one, but {}".format(mat[-1, -1])
     if msg:
         raise ValueError("the given matrix is not valid: {}.".format(msg))
