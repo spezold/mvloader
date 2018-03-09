@@ -39,7 +39,8 @@ def open_image(path, verbose=True, repair=False):
     Volume
         The resulting 3D image volume, with the ``src_object`` attribute set to the respective
         ``nibabel.nifti1.Nifti1Image`` instance and the desired anatomical world coordinate system ``system`` set to
-        "RAS".
+        "RAS". Relies on the NIfTI header's `get_best_affine()` method to dermine which transformation matrix to use
+        (qform or sform).
 
     Raises
     ------
@@ -71,18 +72,8 @@ def open_image(path, verbose=True, repair=False):
     # Repair superfluous 4th dimension
     if repair:
         voxel_data = __repair_dim(voxel_data, verbose)
-        
-    # Create new ``Volume`` instance
-    
-    # Get quaternion + voxel size + offset information, convert to transformation matrix
-    quaternion = hdr.get_qform_quaternion()
-    voxel_size = np.asarray(hdr.get_zooms()[:3])  # Discard the last value for 4D data
-    offset = np.array([hdr["qoffset_x"], hdr["qoffset_y"], hdr["qoffset_z"]])
-    # Adjust the voxel size according to the "qfac" stored in pixdim[0] (cf. [1]_)
-    qfac = hdr["pixdim"][0]
-    qfac = qfac if qfac in [-1, 1] else 1
-    voxel_size = voxel_size * (1, 1, qfac)
-    mat = __matrix_from_quaternion(quaternion, voxel_size, offset)
+
+    mat = hdr.get_best_affine()
 
     volume = Volume(src_voxel_data=voxel_data, src_transformation=mat, src_system=src_system, system="RAS",
                     src_object=src_object)
@@ -154,34 +145,6 @@ def __repair_dim(data, verbose):
         if verbose:
             print("4D array has been corrected to 3D.")
     return data
-
-
-def __matrix_from_quaternion(quaternion, voxel_size, offset):
-    """
-    Calculate the transformation matrix from voxel coordinates to the anatomical world coordinate system based on the
-    given quaternion, voxel size, and offset information.
-
-    Parameters
-    ----------
-    quaternion : array_like
-        Quaternion that gives the rotation information (4-element array with the quaternion's scalar/real part as first
-        element).
-    voxel_size : array_like
-        Voxel sizes in world coordinate system units per voxel (3-element array).
-    offset : array_like
-        Offset information (i.e. translational part of the transformation matrix; 3-element array).
-
-    Returns
-    -------
-    ndarray
-        The resulting :math:`4x4` transformation matrix.
-    """
-    trans_3x3 = nibabel.quaternions.quat2mat(quaternion)
-    trans_3x3 = trans_3x3 @ np.diag(voxel_size)
-    trans_4x4 = np.eye(4)
-    trans_4x4[:3, :3] = trans_3x3
-    trans_4x4[:3, 3] = offset
-    return trans_4x4
 
 
 def compress(path, delete_originals=False):
