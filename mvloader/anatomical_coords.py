@@ -60,13 +60,13 @@ def permutation_matrix(src, dst):
 #     Parameters
 #     ----------
 #     trans : array_like
-#         The :math:`dxd` matrix that represents the original transformations from voxel indices to world coordinates
+#         The :math:`d×d` matrix that represents the original transformations from voxel indices to world coordinates
 #         (excluding offset).
 #
 #     Returns
 #     -------
 #     ndarray
-#         The resulting :math:`dxd` permutation-reflection matrix (containing only integers 0, 1, and -1).
+#         The resulting :math:`d×d` permutation-reflection matrix (containing only integers 0, 1, and -1).
 #     """
 #     ndim = len(trans)
 #     trans_abs = np.abs(trans)
@@ -87,13 +87,13 @@ def find_closest_permutation_matrix(trans):
     Parameters
     ----------
     trans : array_like
-        The :math:`dxd` matrix that represents the original transformations from voxel indices to world coordinates
+        The :math:`d×d` matrix that represents the original transformations from voxel indices to world coordinates
         (excluding offset).
 
     Returns
     -------
     ndarray
-        The resulting :math:`dxd` permutation-reflection matrix (containing only integers 0, 1, and -1).
+        The resulting :math:`d×d` permutation-reflection matrix (containing only integers 0, 1, and -1).
     """
     trans_abs = ma.masked_array(np.abs(trans) / (np.linalg.norm(trans, axis=0)[np.newaxis, :]), mask=(np.zeros_like(trans, dtype=np.bool)))
 
@@ -116,8 +116,8 @@ def swap(volume, perm):
     volume : array_like
         The d-dimensional array whose values are to be swapped.
     perm : array_like
-        A :math:`dxd` matrix that gives the permutations and reflections for swapping. If more values are given, the
-        upper left :math:`dxd` area is considered. The given array should represent a permutation-reflection matrix that
+        A :math:`d×d` matrix that gives the permutations and reflections for swapping. If more values are given, the
+        upper left :math:`d×d` area is considered. The given array should represent a permutation-reflection matrix that
         maps the coordinate axes of one coordinate system exactly onto the axes of another coordinate system.
 
     Returns
@@ -251,7 +251,7 @@ def validate_permutation_matrix(perm):
 
 def validate_transformation_matrix(mat, tol=1e-3):
     """
-    Validate a transformation matrix. A :math:`dxd` matrix is considered valid if (1) its :math:`(d-1)x(d-1)` rotational
+    Validate a transformation matrix. A :math:`d×d` matrix is considered valid if (1) its :math:`(d-1)×(d-1)` rotational
     part has a determinant of absolute value close to one, (2) its last row consists of zeros with a trailing one.
 
     Parameters
