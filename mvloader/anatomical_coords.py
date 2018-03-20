@@ -288,6 +288,52 @@ def get_rotational_part(trans):
     return result
 
 
+def tranformation_for_new_coordinate_system(trans, cold2cnew):
+    """
+    Calculate a new transformation matrix, based on a given transformation matrix (which maps from given voxel indices
+    to a given coordinate system) and a permutation-reflection matrix (which maps from the given coordinate system to
+    the desired coordinate system).
+
+    Parameters
+    ----------
+    trans: array_like
+        The given :math:`(d+1)×(d+1)` transformation matrix.
+    cold2cnew: array_like
+        The :math:`d×d` permutation-reflection matrix.
+
+    Returns
+    -------
+    numpy.ndarray
+        The resulting new :math:`(d+1)×(d+1)` transformation matrix.
+    """
+    vold2cold = trans
+    result = homogeneous_matrix(cold2cnew) @ vold2cold
+    return result
+
+
+def transformation_for_new_voxel_alignment(trans, vnew2vold):
+    """
+    Calculate a new transformation matrix, based on a given transformation matrix (which maps from given voxel indices
+    to a given coordinate system) and a voxel-alignment transformation matrix (which maps from the *desired* voxel
+    indices to the *given* voxel indices).
+
+    Parameters
+    ----------
+    trans: array_like
+        The given :math:`(d+1)×(d+1)` transformation matrix.
+    vnew2vold: array_like
+        The :math:`(d+1)×(d+1)` voxel-alignment matrix, including offset.
+
+    Returns
+    -------
+    numpy.ndarray
+        The resulting new :math:`(d+1)×(d+1)` transformation matrix.
+    """
+    vold2cold = trans
+    result = vold2cold @ vnew2vold
+    return result
+
+
 def validate_permutation_matrix(perm):
     """
     Validate a permutation-reflection matrix. A matrix is considered valid if (1) its determinant is either 1 or
