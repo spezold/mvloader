@@ -67,10 +67,6 @@ class Volume:
         self.__vuser2cuser_4x4 = None
         # ^ Mapping from ``aligned_volume``'s voxel indices to the desired anatomical coordinate system
 
-        # Mapping from the source anatomical coordinate system to the user's anatomical coordinate system
-        # (plain permutation-reflection matrix)
-        self.__csrc2cuser_3x3 = None
-
         # Mapping from ``src_volume`` voxel indices to ``aligned_volume`` voxel indices and vice versa (including offset
         # into the array)
         self.__vsrc2vuser_4x4 = None
@@ -93,89 +89,44 @@ class Volume:
     @system.setter
     def system(self, value):
 
-        value = value.upper()
-        if value != self.__user_system:
-            self.__user_system = value
-            self.__init_system_mapping()
-            self.__init_aligned_volume()
-            self.__init_voxel_mapping()
-            self.__init_spacing()
+        new_system = value.upper()
+        if new_system != self.__user_system:
+            self.__on_system_change(new_system)
 
-    def __init_system_mapping(self):
-        """
-        Calculate the mapping from the source anatomical coordinate system to the user desired anatomical coordinate
-        system and vice versa (3x3 permutation-reflection matrices).
-        """
-        self.__csrc2cuser_3x3 = ac.permutation_matrix(self.__src_system, self.__user_system)
+    def __on_system_change(self, new_system):
 
-    def __init_aligned_volume(self):
-        """
-        Calculate ``aligned_volume``: swap the ``src_volume`` to match the currently desired anatomical world coordinate
-        system ``user_system``. Also calculate the voxel swapping matrices in the process.
-        """
-        # First map the voxels to lie parallel to the *original* coordinate system's axes, then map to the *desired*
-        # coordinate system. This results in the mapping from the ``src_volume`` voxel coordinates to ``aligned_volume``
-        # voxel coordinates (3x3)
-        perm = ac.find_closest_permutation_matrix(self.__vsrc2csrc_4x4[:3, :3])
-        vsrc2vuser3 = self.__csrc2cuser_3x3 @ perm
-        # Make it a 4x4 matrix
-        vsrc2vuser4 = Volume.__vsrc2vdst_4x4(vsrc2vuser3, self.src_volume.shape)
-        vuser2vsrc4 = np.round(np.linalg.inv(vsrc2vuser4)).astype(vsrc2vuser4.dtype)
+        self.__user_system = new_system
 
-        ac.validate_permutation_matrix(vsrc2vuser4[:3, :3])  # Just to be sure ...
-        ac.validate_permutation_matrix(vuser2vsrc4[:3, :3])
+        # Transform: given source array indices -> source system coordinates (known)
+        vsrc2csrc_4x4 = self.__vsrc2csrc_4x4
 
-        self.__vuser2vsrc_4x4 = vuser2vsrc4
-        self.__vsrc2vuser_4x4 = vsrc2vuser4
+        # Swap: given source array axes -> source system axes
+        vsrc2ssrc_3x3 = ac.find_closest_permutation_matrix(vsrc2csrc_4x4[:3, :3])
+        # Swap: source system axes -> user system axes
+        ssrc2suser_3x3 = ac.permutation_matrix(self.__src_system, new_system)
+        # Swap: given source array axes -> user system axes
+        vsrc2suser_3x3 = ssrc2suser_3x3 @ vsrc2ssrc_3x3
 
-        # Actually swap the volume
-        self.__aligned_volume = ac.swap(self.__src_volume, vsrc2vuser4)
+        offset_4x4 = ac.offset(vsrc2suser_3x3, self.__src_volume.shape)
+        # Transform: given source array indices -> user system aligned array indices
+        self.__vsrc2vuser_4x4 = vsrc2vuser_4x4 = ac.homogeneous_matrix(vsrc2suser_3x3) @ offset_4x4
+        # Transform: user system aligned array indices -> given source array indices
+        self.__vuser2vsrc_4x4 = vuser2vsrc_4x4 = np.linalg.inv(vsrc2vuser_4x4)
 
-    @classmethod
-    def __vsrc2vdst_4x4(cls, vsrc2vdst_3x3, src_shape):
-        """
-        Calculate the offset part of the tranformation matrix that maps from voxel indices in a source volume to voxel
-        indices in a destination volume, given the shape of the source volume.
+        # Transform: given source array indices -> user system coordinates
+        self.__vsrc2cuser_4x4 = vsrc2cuser_4x4 = ac.transformation_for_new_coordinate_system(trans=vsrc2csrc_4x4, sold2snew=ssrc2suser_3x3)
+        # Transform: user system aligned array indices -> user system coordinates
+        self.__vuser2cuser_4x4 = vuser2cuser_4x4 = ac.transformation_for_new_voxel_alignment(trans=vsrc2cuser_4x4, vnew2vold=vuser2vsrc_4x4)
 
-        Parameters
-        ----------
-        vsrc2vdst_3x3 : array_like
-            :math:`3x3` transformation matrix that maps from source voxel indices to destination voxel indices.
-        src_shape : array_like
-            Three-tuple or similar, giving the shape of the source volume.
-
-        Returns
-        -------
-        ndarray
-            :math:`4x4` matrix that completes the given :math:`3x3` matrix with its offset (i.e. translational) part.
-        """
-        # Add offset of (dimension size - 1) for the inverted dimensions (in this way account for the inverted and
-        # thus negative voxel indices)
-        offset = (vsrc2vdst_3x3 @ (np.asarray(src_shape) - 1)).clip(max=0)
-        vsrc2vdst_4x4 = np.eye(4, dtype=np.int)
-        vsrc2vdst_4x4[:3, :3] = vsrc2vdst_3x3
-        vsrc2vdst_4x4[:3, 3] = -offset
-        return vsrc2vdst_4x4
-
-
-    def __init_voxel_mapping(self):
-        """
-        Calculate ``vsrc2cuser`` and ``vuser2cuser``, i.e. the mappings from ``src_volume``'s and ``aligned_volume``'s
-        voxel indices to the currently desired anatomical world coordinate system ``system``.
-        """
-        self.__vsrc2cuser_4x4 = self.get_src_transformation(system=self.__user_system)
-        self.__vuser2cuser_4x4 = self.get_aligned_transformation(system=self.__user_system)
-
-    def __init_spacing(self):
-        """
-        Calculate ``src_spacing`` and ``aligned_spacing``, i.e. the voxel spacings for ``src_volume`` and
-        ``aligned_volume``.
-        """
+        # Recalculate voxel sizes ("spacing")
         ndim = 3
-        m = self.__vsrc2csrc_4x4
+        m = vsrc2csrc_4x4
         self.__src_spacing = tuple(np.linalg.norm(m[:ndim, :ndim], axis=0))
-        m = self.__vuser2cuser_4x4
+        m = vuser2cuser_4x4
         self.__aligned_spacing = tuple(np.linalg.norm(m[:ndim, :ndim], axis=0))
+
+        # Actually swap the given source array
+        self.__aligned_volume = ac.swap(self.__src_volume, vsrc2vuser_4x4)
 
     @property
     def src_system(self):
@@ -295,10 +246,8 @@ class Volume:
         --------
         get_aligned_transformation : Same transformation, but for ``aligned_volume``.
         """
-        csrc2csys = np.eye(4)
-        csrc2csys[:-1, :-1] = ac.permutation_matrix(self.__src_system, system)
-        result = csrc2csys @ self.__vsrc2csrc_4x4
-        return result
+        sold2snew_3x3 = ac.permutation_matrix(self.__src_system, system)
+        return ac.transformation_for_new_coordinate_system(trans=self.__vsrc2csrc_4x4, sold2snew=sold2snew_3x3)
 
     def get_aligned_transformation(self, system):
         """
@@ -320,9 +269,8 @@ class Volume:
         --------
         get_src_transformation : Same transformation, but for ``src_volume``.
         """
-        vsrc2csys = self.get_src_transformation(system=system)
-        result = vsrc2csys @ self.__vuser2vsrc_4x4
-        return result
+        vsrc2csys_4x4 = self.get_src_transformation(system=system)
+        return ac.transformation_for_new_voxel_alignment(trans=vsrc2csys_4x4, vnew2vold=self.__vuser2vsrc_4x4)
 
     def copy(self, deep=True):
         """
@@ -373,7 +321,7 @@ class Volume:
         current_instance.system = template.system
         # Get the mapping from template's aligned_volume to its src_volume, adjust for the current volume's shape,
         # then use it to rearrange the current instance's voxels and transformation matrices
-        vuser2vsrc = Volume.__vsrc2vdst_4x4(template.__vuser2vsrc_4x4[:3, :3], current_instance.aligned_volume.shape)
+        vuser2vsrc = Volume.__vsrc2vdst_4x4(template.__vuser2vsrc_4x4[:3, :3], current_instance.aligned_volume.shape)  # FIXME:
         vsrc2vuser = np.round(np.linalg.inv(vuser2vsrc)).astype(vuser2vsrc.dtype)
         src_voxel_data = ac.swap(current_instance.aligned_volume, vuser2vsrc)
         src_transformation = current_instance.get_aligned_transformation(template.src_system) @ vsrc2vuser
