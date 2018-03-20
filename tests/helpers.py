@@ -155,7 +155,7 @@ def generate_test_data():
          [0, 0, 0, 1]]
     to_nifti(t, file)
     # Source data aligned with LAS anatomical coordinates
-    file = testdata_dir / "LAS-0.3x0.4x0.5.nii.gz"  # FIXME:
+    file = testdata_dir / "LAS-0.3x0.4x0.5.nii.gz"
     t = [[-0.3, 0.0, 0.0, 0.3],
          [ 0.0, 0.4, 0.0, 0.0],
          [ 0.0, 0.0, 0.5, 0.0],
