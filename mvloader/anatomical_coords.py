@@ -135,53 +135,42 @@ def offset(perm, shape):
     return offset_matrix
 
 
-def swap(volume, perm):
+def swap(a, perm, copy=False):
     """
     Swap the values in the given volume according to the given permutation-reflection matrix.
 
     Parameters
     ----------
-    volume : array_like
-        The d-dimensional array whose values are to be swapped.
+    a : array_like
+        The :math:`d`-dimensional array whose values are to be swapped.
     perm : array_like
-        A :math:`d×d` matrix that gives the permutations and reflections for swapping. If more values are given, the
-        upper left :math:`d×d` area is considered. The given array should represent a permutation-reflection matrix that
-        maps the coordinate axes of one coordinate system exactly onto the axes of another coordinate system.
-
+        A :math:`d×d` matrix that gives the permutations and reflections for swapping. If more values are given than
+        implied by `a`'s dimensions, the upper left :math:`d×d` area is considered. The given array should represent a
+        permutation-reflection matrix that maps the coordinate axes of one coordinate system exactly onto the axes of
+        another coordinate system.
+    copy : bool, optional
+        If `False` (default), return a view into the given array `a` whenever possible; if `True`, return an array that
+        does not share data with `a`.
     Returns
     -------
     ndarray
-        The d-dimensional array that results from swapping.
-
-    See also
-    --------
-    matrix : Function that creates a permutation-reflection matrix.
-    validate_permutation_matrix : Check if a given matrix is a valid permutation-reflection matrix.
+        The :math:`d`-dimensional array that results from swapping.
     """
+    a = a.copy() if copy else a
 
-    # TODO: (1) Add a new parameter here: `copy` -- if True, keep current behaviour (i.e. the result's data is
-    # independent of the given array's data); if False, make the result a view into the given array (i.e. let them share
-    # their data). This needs the use of `ndarray.flip` when inverting the axis (and some more care so as not to change
-    # the given array in the course of transformations). (2) Use `copy=False` when creating the `aligned_volume` in
-    # the `Volume` class.
-
-    volume = np.copy(volume)
-    ndim = volume.ndim
+    ndim = a.ndim
     perm = perm[:ndim, :ndim]
     validate_permutation_matrix(perm)
 
-    # Invert the axes as necessary: Sum the columns of the matrix. Get a three-tuple, where each element is either
-    # +1, meaning the respective axis (in source coordinates) doesn't have to be inverted, or -1, meaning it has to
-    # be inverted; then actually invert the axes
-    inv = np.sum(perm, axis=0).astype(np.int)  # Cast to int to avoid deprecation warning in slice creation
-    volume = volume[tuple([slice(None, None, i) for i in inv])]
+    # Reverse values in the necessary axes
+    flips = must_be_flipped(perm[:ndim, :ndim])
+    a = a[tuple(slice(None, None, -1 if f else None) for f in flips)]
 
-    # Swap the axes as necessary: Transform a vector representing the axis numbers (i.e. (0, 1, 2)) by the absolute
-    # value of the given matrix (as the inversions do not matter here), then permute the axes according to the result
+    # Permute axes
     permutations = (np.abs(perm) @ np.arange(ndim)).astype(np.int)
-    volume = np.transpose(volume, permutations)
+    a = np.transpose(a, axes=permutations)
 
-    return volume
+    return a
 
 
 def pos(system):
