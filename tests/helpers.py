@@ -82,18 +82,30 @@ def generate_test_data():
         # If `transformation` is a 3x3 matrix, also calculate the respective 4x4 transformation matrix, with
         # the offset calculated to have the origin at the testdata voxel with value zero
 
+        def offset(perm, shape):
+
+            # 4x4 matrix to be premultiplied
+
+            must_be_flipped = lambda p: (np.sum(p, axis=0) < 0).astype(int)
+
+            ndim = len(shape)
+            max_indices = np.asarray(shape) - 1
+            # Swap if the row's set element's sign is negative -> add offset there
+            offset_vector = must_be_flipped(perm[:ndim, :ndim]) * (-max_indices)
+            offset_matrix = np.eye(ndim + 1, dtype=np.int)
+            offset_matrix[:-1, -1] = offset_vector
+            return offset_matrix
+
         calculate_4x4 = (transformation.shape == (3, 3))
         transformation_3x3 = transformation[:3, :3]
         transformed_array = array
 
-        if calculate_4x4:
-            offset_candidates = transformation_3x3 @ (np.asarray(array.shape) - 1)
-            offset = np.zeros(array.ndim)
-
         abs_transformation_3x3 = ma.masked_array(np.abs(transformation_3x3), mask=np.zeros_like(transformation_3x3, dtype=np.bool))
+        perm = np.zeros(abs_transformation_3x3.shape, dtype=np.int)
         ji_argmaxes = []
         while np.sum(~abs_transformation_3x3.mask) > 0:
             ij_argmax = np.unravel_index(abs_transformation_3x3.argmax(), abs_transformation_3x3.shape)
+            perm[ij_argmax] = np.sign(transformation_3x3[ij_argmax])
             abs_transformation_3x3.mask[ij_argmax[0], :] = True
             abs_transformation_3x3.mask[:, ij_argmax[1]] = True
             ji_argmaxes.append(ij_argmax[::-1])
@@ -103,14 +115,12 @@ def generate_test_data():
         for j in ji_argmaxes[:, 0]:
             if transformation[ji_argmaxes[j, 1], j] < 0:
                 transformed_array = np.flip(transformed_array, axis=j)
-                if calculate_4x4:
-                    offset[j] = -offset_candidates[j]
 
         if calculate_4x4:
             transformation_3x3 = transformation
             transformation = np.eye(4)
             transformation[:3, :3] = transformation_3x3
-            transformation[:3, 3] = offset
+            transformation = transformation @ offset(perm, array.shape)
         return transformed_array, transformation
 
     def to_nifti(transformation, filepath):
@@ -145,12 +155,12 @@ def generate_test_data():
          [0, 0, 0, 1]]
     to_nifti(t, file)
     # Source data aligned with LAS anatomical coordinates
-    # file = testdata_dir / "LAS-0.3x0.4x0.5.nii.gz"  # FIXME:
-    # t = [[-0.3, 0.0, 0.0, 0.3],
-    #      [ 0.0, 0.4, 0.0, 0.0],
-    #      [ 0.0, 0.0, 0.5, 0.0],
-    #      [ 0.0, 0.0, 0.0, 1.0]]
-    # to_nifti(t, file)
+    file = testdata_dir / "LAS-0.3x0.4x0.5.nii.gz"  # FIXME:
+    t = [[-0.3, 0.0, 0.0, 0.3],
+         [ 0.0, 0.4, 0.0, 0.0],
+         [ 0.0, 0.0, 0.5, 0.0],
+         [ 0.0, 0.0, 0.0, 1.0]]
+    to_nifti(t, file)
     # Source data aligned with LPS anatomical coordinates
     file = testdata_dir / "LPS-3.0x3.1x3.2.nii.gz"
     t = [[-3.0,  0.0, 0.0, 3.0],
@@ -211,16 +221,14 @@ def generate_test_data():
          [ 0.0, -1.3,  0.0, 1.3],
          [ 0.0,  0.0,  0.0, 1.0]]
     to_nrrd(t, file, "LPS")
-    # # Source data *almost* aligned with LAI anatomical coordinates, NRRD system: LAS  # FIXME: This case still doesn't work
-    # # file = testdata_dir / "aLAI2LAS-2.1x1.3x0.8.nrrd"  # FIXME:
-    # file = testdata_dir / "aLAI2LAS-1.0x1.0x1.0.nrrd"
-    # f = np.diag([1, 1, -1])
-    # r = rotation_matrix(0.13 * tau, 0.10 * tau, 0.07 * tau)
-    # fr = f @ r
-    # # s = np.diag([2.1, 1.3, 0.8])
-    # s = np.diag([1.0, 1.0, 1.0])
-    # frs = fr @ s
-    # to_nrrd(frs, file, "LAS")
+    # Source data *almost* aligned with LAI anatomical coordinates, NRRD system: LAS
+    file = testdata_dir / "aLAI2LAS-2.1x1.3x0.8.nrrd"
+    f = np.diag([1, 1, -1])
+    r = rotation_matrix(0.13 * tau, 0.10 * tau, 0.07 * tau)
+    fr = f @ r
+    s = np.diag([2.1, 1.3, 0.8])
+    frs = fr @ s
+    to_nrrd(frs, file, "LAS")
 
     return str(testdata_dir), testdata, src_testdata, src_transformations
 
