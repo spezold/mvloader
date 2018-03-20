@@ -9,6 +9,11 @@ import numpy as np
 from numpy import ma
 
 
+#: for every uppercase letter defining an anatomical direction, when given as a key, return an uppercase letter that
+#: marks the opposite direction in the same anatomical axis.
+opposites = {'R': "L", 'A': "P", 'S': "I", 'L': "R", 'P': "A", 'I': "S"}
+
+
 def permutation_matrix(src, dst):
     """
     Calculate the permutation-reflection matrix that maps axes from the given source anatomical coordinate system to the
@@ -173,24 +178,10 @@ def index(system, character):
     character = character.upper()
 
     i = system.find(character)
-    i = system.index(opposites()[character]) if i == -1 else i
+    i = system.index(opposites[character]) if i == -1 else i
     # ^ str.find() returns -1 for mismatch, while str.index() raises an error
 
     return i
-
-
-def opposites():
-    """
-    Create a dictionary that for every uppercase letter defining an anatomical direction, when given as a key, will
-    return an uppercase letter that marks the opposite direction in the same anatomical axis. As an example,
-    ``opposites()["R"]`` will give "L".
-
-    Returns
-    -------
-    dict
-        A dictionary with each key and value being one of "A", "P", "I", "S", "L", "R" (uppercase).
-    """
-    return {"R": "L", "A": "P", "S": "I", "L": "R", "P": "A", "I": "S"}
 
 
 def validate_permutation_matrix(perm):
