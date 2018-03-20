@@ -288,7 +288,7 @@ def get_rotational_part(trans):
     return result
 
 
-def tranformation_for_new_coordinate_system(trans, sold2snew):
+def transformation_for_new_coordinate_system(trans, sold2snew):
     """
     Calculate a new transformation matrix, based on a given transformation matrix (which maps from given voxel indices
     to a given coordinate system) and a permutation-reflection matrix (which maps from the given coordinate system to
