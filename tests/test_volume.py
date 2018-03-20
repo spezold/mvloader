@@ -225,12 +225,12 @@ class TestLoadVolume(unittest.TestCase):
 
             # Check the voxel sizes for both array representations
             np.testing.assert_array_almost_equal(voxel_size, v.src_spacing, err_msg=alignment_triple)
-            np.testing.assert_array_almost_equal(voxel_size, np.abs(permutation_matrix(alignment_triple, src_system)[1] @ v.aligned_spacing), err_msg=alignment_triple)
+            np.testing.assert_array_almost_equal(voxel_size, np.abs(permutation_matrix(src_system, alignment_triple) @ v.aligned_spacing), err_msg=alignment_triple)
 
             # Check the rotational part of src_transformation: if it is actually and not almost aligned, it should
             # be the same as the permutation matrix that we can recreate from the file name
             if not self.almost_aligneds[alignment_triple]:
-                should_transformation = permutation_matrix(alignment_triple, src_system)[0]
+                should_transformation = permutation_matrix(alignment_triple, src_system)
                 is_transformation = v.src_transformation[:3, :3] * (1 / np.linalg.norm(v.src_transformation[:3, :3], axis=0)[np.newaxis, :])
                 np.testing.assert_array_almost_equal(should_transformation, is_transformation, err_msg=alignment_triple)
 

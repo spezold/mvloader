@@ -30,12 +30,10 @@ def permutation_matrix(src, dst):
 
     Returns
     -------
-    tuple
-        A two-tuple ``(src2dst, dst2src)`` where ``src2dst`` holds the :math:`3x3` permutation and reflection matrix
-        that maps coordinates from the ``src`` system to the ``dst`` system, and ``dst2src`` holds the :math:`3x3`
-        matrix for the inverse mapping. Both matrices are Numpy arrays with a determinant of plus/minus one,
-        containing only zeros, ones, and minus ones. A minus one signifies a swapped axis direction (e.g. "L" in
-        ``src`` becomes "R" in ``dst``).
+    numpy.ndarray
+        The :math:`3x3` permutation-reflection matrix that maps coordinates from the ``src`` system to the ``dst``
+        system. A minus one signifies a swapped axis direction (e.g. "L" in `src`` becomes "R" in ``dst``). Note that
+        the inverse mapping is given by the result's transpose.
     """
     src = src.upper()
     dst = dst.upper()
@@ -54,7 +52,7 @@ def permutation_matrix(src, dst):
         # the respective axis (-1), otherwise not (1)
         mat[dst_pos[i], src_pos[i]] = -1 if dst[dst_pos[i]] != src[src_pos[i]] else 1
 
-    return mat, mat.T
+    return mat
 
 
 def find_closest_permutation_matrix(trans):
