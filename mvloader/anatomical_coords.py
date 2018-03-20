@@ -6,6 +6,7 @@ Transform between different 3D anatomical coordinate systems (RAS, LAS etc.)
 """
 
 import numpy as np
+from numpy import ma
 
 
 def permutation_matrix(src, dst):
@@ -51,6 +52,33 @@ def permutation_matrix(src, dst):
     return mat, mat.T
 
 
+# def find_closest_permutation_matrix(trans):
+#     """
+#     Find the transformation matrix that *almost* maps voxel axes to original world coordinate axes, but does not
+#     require interpolation, i.e. the permutation-reflection matrix closest to the given transformation matrix.
+#
+#     Parameters
+#     ----------
+#     trans : array_like
+#         The :math:`dxd` matrix that represents the original transformations from voxel indices to world coordinates
+#         (excluding offset).
+#
+#     Returns
+#     -------
+#     ndarray
+#         The resulting :math:`dxd` permutation-reflection matrix (containing only integers 0, 1, and -1).
+#     """
+#     ndim = len(trans)
+#     trans_abs = np.abs(trans)
+#
+#     perm = np.zeros((ndim, ndim), dtype=np.int)
+#     remaining_indices = list(range(ndim))
+#     # Set the maximum along each column to +/-1, keeping track of the positions already set to avoid collisions
+#     for i in range(ndim):
+#         m = np.argmax(trans_abs[remaining_indices, i])
+#         perm[remaining_indices[m], i] = np.sign(trans[remaining_indices[m], i])
+#         remaining_indices.pop(m)
+#     return perm
 def find_closest_permutation_matrix(trans):
     """
     Find the transformation matrix that *almost* maps voxel axes to original world coordinate axes, but does not
@@ -67,16 +95,15 @@ def find_closest_permutation_matrix(trans):
     ndarray
         The resulting :math:`dxd` permutation-reflection matrix (containing only integers 0, 1, and -1).
     """
-    ndim = len(trans)
-    trans_abs = np.abs(trans)
+    trans_abs = ma.masked_array(np.abs(trans) / (np.linalg.norm(trans, axis=0)[np.newaxis, :]), mask=(np.zeros_like(trans, dtype=np.bool)))
 
-    perm = np.zeros((ndim, ndim), dtype=np.int)
-    remaining_indices = list(range(ndim))
-    # Set the maximum along each column to +/-1, keeping track of the positions already set to avoid collisions
-    for i in range(ndim):
-        m = np.argmax(trans_abs[remaining_indices, i])
-        perm[remaining_indices[m], i] = np.sign(trans[remaining_indices[m], i])
-        remaining_indices.pop(m)
+    perm = np.zeros(trans_abs.shape, dtype=np.int)
+    # Set the maxima to +/-1, keeping track of rows/columns already set to avoid collisions
+    while np.sum(~trans_abs.mask) > 0:
+        ij_argmax = np.unravel_index(trans_abs.argmax(), trans_abs.shape)
+        perm[ij_argmax] = np.sign(trans[ij_argmax])
+        trans_abs.mask[ij_argmax[0], :] = True
+        trans_abs.mask[:, ij_argmax[1]] = True
     return perm
 
 

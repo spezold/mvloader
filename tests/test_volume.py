@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from _ast import alias
 
 import numpy as np
+from pathlib import Path
+import shutil
 import unittest
 
+from mvloader import nifti, nrrd
+from mvloader.anatomical_coords import permutation_matrix
 from mvloader.volume import Volume
-from tests.helpers import transformation_matrix, random_transformation_matrix, random_voxel_data
+from tests.helpers import transformation_matrix, random_transformation_matrix, random_voxel_data, generate_test_data
 
 
 class TestCreateVolume(unittest.TestCase):
@@ -180,6 +185,7 @@ class TestCreateVolume(unittest.TestCase):
 
         v = Volume(src_voxel_data=src_voxel_data, src_transformation=src_transformation, src_system="ASL")
 
+        # Values in v should still be the same as the initially given ones
         np.testing.assert_array_equal(v.src_transformation, src_transformation)
         np.testing.assert_array_equal(v.src_volume, src_voxel_data)
 
@@ -188,7 +194,106 @@ class TestCreateVolume(unittest.TestCase):
         a = v.aligned_volume
         np.testing.assert_array_almost_equal([np.mean(s), np.std(s)], [np.mean(a), np.std(a)])
 
-    # TODO: Continue here: loading sample data (create sample data first), changing coordinate systems, copying
+
+class TestLoadVolume(unittest.TestCase):
+
+    def setUp(self):
+
+        self._testdata_dir, self._testdata_array, self._src_testdata_arrays, self._src_transformations = generate_test_data()
+        # `paths`:       key: alignment coordinate system triple, value: full file path
+        # `voxel_sizes`: key: alignment coordinate system triple, value: voxel size
+        # `src_sytems`:  key: alignment coordinate system triple, value: assumed src_system triple
+        self.paths, self.voxel_sizes, self.src_systems, self.almost_aligneds = self._assemble_metadata_from_filenames()
+
+    def testAll(self):
+
+        for alignment_triple in sorted(self.paths.keys()):
+
+            path = self.paths[alignment_triple]
+            voxel_size = self.voxel_sizes[alignment_triple]
+            src_system = self.src_systems[alignment_triple]
+            v = nrrd.open_image(path, verbose=False) if path.endswith(".nrrd") else nifti.open_image(path, verbose=False)
+
+            self.assertEqual(v.system, "RAS", msg=alignment_triple)  # All volumes should be aligned to RAS by default
+
+            # Changing the assumed system to the same as `src_sytem` allows us to simply compare `aligned_volume` with
+            # the given `testdata_array` (and implicitly lets us check if changing coordinate systems works properly)
+            v.system = self.src_systems[alignment_triple]
+
+            # Check the aligned_transformation matrix
+            np.testing.assert_array_almost_equal(self._src_transformations[alignment_triple], v.src_transformation, err_msg=alignment_triple)
+
+            # Check the voxel sizes for both array representations
+            np.testing.assert_array_almost_equal(voxel_size, v.src_spacing, err_msg=alignment_triple)
+            np.testing.assert_array_almost_equal(voxel_size, np.abs(permutation_matrix(alignment_triple, src_system)[1] @ v.aligned_spacing), err_msg=alignment_triple)
+
+            # Check the rotational part of src_transformation: if it is actually and not almost aligned, it should
+            # be the same as the permutation matrix that we can recreate from the file name
+            if not self.almost_aligneds[alignment_triple]:
+                should_transformation = permutation_matrix(alignment_triple, src_system)[0]
+                is_transformation = v.src_transformation[:3, :3] * (1 / np.linalg.norm(v.src_transformation[:3, :3], axis=0)[np.newaxis, :])
+                np.testing.assert_array_almost_equal(should_transformation, is_transformation, err_msg=alignment_triple)
+
+            # Check the actual array contents of src_volume and aligned_volume (should exactly match the src_testdata
+            # and testdata arrays)
+            np.testing.assert_array_equal(self._src_testdata_arrays[alignment_triple], v.src_volume, err_msg=alignment_triple)
+            np.testing.assert_array_equal(self._testdata_array, v.aligned_volume, err_msg=alignment_triple)
+
+            # Check the value at the coordinate system origins: should be zero
+            world_origin = np.asarray([0, 0, 0, 1])
+            i_src = tuple(np.round(np.linalg.inv(v.src_transformation)[:3] @ world_origin).astype(np.int))
+            i_aligned = tuple(np.round(np.linalg.inv(v.aligned_transformation)[:3] @ world_origin).astype(np.int))
+
+            self.assertEqual(self._testdata_array[0, 0, 0], v.src_volume[i_src], msg=alignment_triple)
+            self.assertEqual(self._testdata_array[0, 0, 0], v.aligned_volume[i_aligned], msg=alignment_triple)
+
+            # For all coordinates: Check if we can get from aligned_volume's voxel indices to src_volume's voxel
+            # indices (via aligned_transformation and src_to_aligned_transformation) and find the same values there.
+            # I guess this completes our transformation checks.
+            aligned_indices = np.indices(v.aligned_volume.shape).reshape(v.aligned_volume.ndim, -1)
+            src_indices = (np.linalg.inv(v.src_to_aligned_transformation) @ v.aligned_transformation)[:3] @ np.r_[aligned_indices, np.ones((1, aligned_indices.shape[-1]))]
+            src_indices = np.round(src_indices).astype(np.int)
+            np.testing.assert_array_equal(v.src_volume[tuple(src_indices)], v.aligned_volume[tuple(aligned_indices)], err_msg=alignment_triple)
+
+    def _parse_name(self, testdata_filename):
+
+        name = str(Path(testdata_filename).name).replace(".nii.gz", "").replace(".nrrd", "")
+        coord_triples, voxel_size = name.split("-")
+        if "2" not in coord_triples:
+            alignment_triple = coord_triples
+            src_system_triple = "RAS"
+        else:
+            alignment_triple, src_system_triple = coord_triples.split("2")
+        alignment_triple = alignment_triple[-3:]
+        voxel_size = tuple(float(v) for v in voxel_size.split("x"))
+        almost_aligned = name.startswith("a")
+
+        return alignment_triple, src_system_triple, voxel_size, almost_aligned
+
+    def _assemble_metadata_from_filenames(self):
+
+        paths = {}
+        voxel_sizes = {}
+        src_systems = {}
+        almost_aligneds = {}
+
+        for f in Path(self._testdata_dir).iterdir():
+
+            alignment_triple, src_system_triple, voxel_size, almost_aligned = self._parse_name(f)
+
+            paths[alignment_triple] = str(f.resolve())
+            voxel_sizes[alignment_triple] = voxel_size
+            src_systems[alignment_triple] = src_system_triple
+            almost_aligneds[alignment_triple] = almost_aligned
+
+
+        return paths, voxel_sizes, src_systems, almost_aligneds
+
+    def tearDown(self):
+
+        shutil.rmtree(self._testdata_dir)
+
+    # TODO: Continue here: copying
 
 
 
