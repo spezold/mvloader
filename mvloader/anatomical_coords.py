@@ -85,6 +85,56 @@ def find_closest_permutation_matrix(trans):
     return perm
 
 
+def must_be_flipped(perm):
+    """
+    Find which axis need to be flipped/reversed in the original array, according to the given permutation-reflection
+    matrix.
+
+    Parameters
+    ----------
+    perm : array_like
+        A :math:`d×d` matrix that gives the permutations and reflections for swapping.
+
+    Returns
+    -------
+    ndarray
+        A :math:`d`-dimensional vector holding a one for the axes of the original array that need to be flipped and a
+        zero for the others.
+    """
+    result = (np.sum(perm, axis=0) < 0).astype(int)
+    return result
+
+
+def offset(perm, shape):
+    """
+    Calculate the offset to be added on the indices of the original array to end up with the indices of the array that
+    results from swapping according to `perm`.
+
+    This means that if `r` is the output of this function, then `perm @ r` maps form indices in the original array to
+    indices in the swapped array.
+
+    Parameters
+    ----------
+    perm : array_like
+        A :math:`d×d` matrix that gives the permutations and reflections for swapping. If more values are given, the
+        upper left :math:`d×d` area is considered.
+    shape : array_like
+        Tuple of :math: `d` values that give the shape of the original array (i.e. before swapping).
+
+    Returns
+    -------
+    ndarray
+        A :math:`(d+1)×(d+1)` matrix that holds the calculated offset as its translational part.
+    """
+    ndim = len(shape)
+    max_indices = np.asarray(shape) - 1
+    # Swap if the sign of the respective column's nonzero element is negative -> add offset there
+    offset_vector = must_be_flipped(perm[:ndim, :ndim]) * (-max_indices)
+    offset_matrix = np.eye(ndim + 1, dtype=np.int)
+    offset_matrix[:-1, -1] = offset_vector
+    return offset_matrix
+
+
 def swap(volume, perm):
     """
     Swap the values in the given volume according to the given permutation-reflection matrix.
