@@ -52,33 +52,6 @@ def permutation_matrix(src, dst):
     return mat, mat.T
 
 
-# def find_closest_permutation_matrix(trans):
-#     """
-#     Find the transformation matrix that *almost* maps voxel axes to original world coordinate axes, but does not
-#     require interpolation, i.e. the permutation-reflection matrix closest to the given transformation matrix.
-#
-#     Parameters
-#     ----------
-#     trans : array_like
-#         The :math:`d×d` matrix that represents the original transformations from voxel indices to world coordinates
-#         (excluding offset).
-#
-#     Returns
-#     -------
-#     ndarray
-#         The resulting :math:`d×d` permutation-reflection matrix (containing only integers 0, 1, and -1).
-#     """
-#     ndim = len(trans)
-#     trans_abs = np.abs(trans)
-#
-#     perm = np.zeros((ndim, ndim), dtype=np.int)
-#     remaining_indices = list(range(ndim))
-#     # Set the maximum along each column to +/-1, keeping track of the positions already set to avoid collisions
-#     for i in range(ndim):
-#         m = np.argmax(trans_abs[remaining_indices, i])
-#         perm[remaining_indices[m], i] = np.sign(trans[remaining_indices[m], i])
-#         remaining_indices.pop(m)
-#     return perm
 def find_closest_permutation_matrix(trans):
     """
     Find the transformation matrix that *almost* maps voxel axes to original world coordinate axes, but does not
