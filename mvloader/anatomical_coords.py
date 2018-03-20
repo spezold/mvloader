@@ -76,7 +76,7 @@ def find_closest_permutation_matrix(trans):
     trans_abs = ma.masked_array(np.abs(trans) / (np.linalg.norm(trans, axis=0)[np.newaxis, :]), mask=(np.zeros_like(trans, dtype=np.bool)))
 
     perm = np.zeros(trans_abs.shape, dtype=np.int)
-    # Set the maxima to +/-1, keeping track of rows/columns already set to avoid collisions
+    # Set the maxima to ±1, keeping track of rows/columns already set to avoid collisions
     while np.sum(~trans_abs.mask) > 0:
         ij_argmax = np.unravel_index(trans_abs.argmax(), trans_abs.shape)
         perm[ij_argmax] = np.sign(trans[ij_argmax])
