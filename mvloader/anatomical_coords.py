@@ -288,7 +288,7 @@ def get_rotational_part(trans):
     return result
 
 
-def tranformation_for_new_coordinate_system(trans, cold2cnew):
+def tranformation_for_new_coordinate_system(trans, sold2snew):
     """
     Calculate a new transformation matrix, based on a given transformation matrix (which maps from given voxel indices
     to a given coordinate system) and a permutation-reflection matrix (which maps from the given coordinate system to
@@ -298,7 +298,7 @@ def tranformation_for_new_coordinate_system(trans, cold2cnew):
     ----------
     trans: array_like
         The given :math:`(d+1)×(d+1)` transformation matrix.
-    cold2cnew: array_like
+    sold2snew: array_like
         The :math:`d×d` permutation-reflection matrix.
 
     Returns
@@ -307,7 +307,7 @@ def tranformation_for_new_coordinate_system(trans, cold2cnew):
         The resulting new :math:`(d+1)×(d+1)` transformation matrix.
     """
     vold2cold = trans
-    result = homogeneous_matrix(cold2cnew) @ vold2cold
+    result = homogeneous_matrix(sold2snew) @ vold2cold
     return result
 
 
