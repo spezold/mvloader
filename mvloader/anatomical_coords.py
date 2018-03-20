@@ -223,6 +223,73 @@ def index(system, character):
     return i
 
 
+def homogeneous_vector(v):
+    """
+    Make the given vector(s) homogeneous: for a :math:`d`-element vector, append one and make it a :math:`d+1`-element
+    vector; for a :math:`d×n` array of vectors, append a row of ones and make it a :math:`(d+1)×n` array.
+
+    Parameters
+    ----------
+    v : array_like
+        Either a :math:`d`-element vector or a :math:`d×n` array of vectors.
+
+    Returns
+    -------
+    numpy.ndarray
+        A :math:`d+1`-element vector or :math:`(d+1)×n` array.
+    """
+    v = np.asarray(v)
+    if v.ndim == 1:
+        v_h = np.r_[v, 1]
+    elif v.ndim == 2:
+        v_h = np.r_[v, np.ones(v.shape[-1], dtype=v.dtype)[np.newaxis, :]]
+    else:
+        raise ValueError("Cannot handle array of shape {}!".format(v.shape))
+    return v_h
+
+
+def homogeneous_matrix(m):
+    """
+    Make the given :math:`d×d` matrix homogeneous: place and return it in the top left corner of a :math:`(d+1)×(d+1)`
+    identity matrix.
+
+    Parameters
+    ----------
+    m : array_like
+        The :math:`d×d` matrix to be handled.
+
+    Returns
+    -------
+    numpy.ndarray
+        The resulting :math:`(d+1)×(d+1)` matrix.
+    """
+    m = np.asarray(m)
+    assert m.shape[0] == m.shape[1], "Cannot handle array of shape {}!".format(m.shape)
+    m_h = np.eye(m.shape[0] + 1, dtype=m.dtype)
+    m_h[:-1, :-1] = m
+    return m_h
+
+
+def get_rotational_part(trans):
+    """
+    Get the :math:`d×d` rotational part of a :math:`(d+1)×(d+1)` transformation matrix.
+
+    Parameters
+    ----------
+    trans : array_like
+        The given transformation matrix.
+
+    Returns
+    -------
+    ndarray
+        The rotational part, with potential scaling removed.
+    """
+    result_with_scaling = trans[:-1, :-1]
+    scaling = np.linalg.norm(result_with_scaling, axis=0)
+    result = result_with_scaling * (1 / (scaling + (scaling == 0)))[np.newaxis, :]
+    return result
+
+
 def validate_permutation_matrix(perm):
     """
     Validate a permutation-reflection matrix. A matrix is considered valid if (1) its determinant is either 1 or
