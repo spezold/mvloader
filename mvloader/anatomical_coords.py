@@ -71,7 +71,7 @@ def find_closest_permutation_matrix(trans):
     numpy.ndarray
         The resulting :math:`d×d` permutation-reflection matrix (containing only integers 0, 1, and -1).
     """
-    trans_abs = ma.masked_array(np.abs(trans) / (np.linalg.norm(trans, axis=0)[np.newaxis, :]), mask=(np.zeros_like(trans, dtype=np.bool)))
+    trans_abs = ma.masked_array(remove_scaling(np.abs(trans)), mask=(np.zeros_like(trans, dtype=np.bool)))
 
     perm = np.zeros(trans_abs.shape, dtype=np.int)
     # Set the maxima to ±1, keeping track of rows/columns already set to avoid collisions
@@ -81,6 +81,26 @@ def find_closest_permutation_matrix(trans):
         trans_abs.mask[ij_argmax[0], :] = True
         trans_abs.mask[:, ij_argmax[1]] = True
     return perm
+
+
+def remove_scaling(trans):
+    """
+    Remove scaling from the given :math:`d×d` rotation matrix, i.e. divide its columns by their Euclidean norm.
+
+    Parameters
+    ----------
+    trans : array_like
+        The matrix whose scaling is to be removed; should be given without offset/translational part.
+
+    Returns
+    -------
+    numpy.ndarray
+        New matrix with scaling removed. Columns of zero norm will remain zeros.
+    """
+    trans = np.asarray(trans)
+    scaling = np.linalg.norm(trans, axis=0)
+    result = trans * (1 / (scaling + (scaling == 0)))[np.newaxis, :]
+    return result
 
 
 def must_be_flipped(perm):
@@ -282,9 +302,11 @@ def get_rotational_part(trans):
     numpy.ndarray
         The rotational part, with potential scaling removed.
     """
-    result_with_scaling = trans[:-1, :-1]
-    scaling = np.linalg.norm(result_with_scaling, axis=0)
-    result = result_with_scaling * (1 / (scaling + (scaling == 0)))[np.newaxis, :]
+    trans = np.asarray(trans)
+    assert trans.shape[0] == trans.shape[1]
+    ndim = trans.shape[0] - 1
+
+    result = remove_scaling(trans[:ndim, :ndim])
     return result
 
 
