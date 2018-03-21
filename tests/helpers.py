@@ -72,7 +72,8 @@ def generate_test_data():
         Path to the temporary directory containing the test data. To be cleaned up after use!
     """
     testdata_dir = Path(tempfile.mkdtemp(prefix="mvloader-")).resolve()
-    testdata = np.arange(8, dtype=np.uint16).reshape(2,2,2)
+    testdata = np.arange(24, dtype=np.uint16).reshape(2, 3, 4)
+    max_i = np.asarray(testdata.shape) - 1
     src_testdata = {}
     src_transformations = {}
     tau = 2 * np.pi
@@ -149,44 +150,44 @@ def generate_test_data():
 
     # Source data aligned with RAS anatomical coordinates
     file = testdata_dir / "RAS-1.0x1.0x1.0.nii.gz"
-    t = [[1, 0, 0, 0],
-         [0, 1, 0, 0],
-         [0, 0, 1, 0],
+    t = [[1, 0, 0, 0 * max_i[0]],
+         [0, 1, 0, 0 * max_i[1]],
+         [0, 0, 1, 0 * max_i[2]],
          [0, 0, 0, 1]]
     to_nifti(t, file)
     # Source data aligned with LAS anatomical coordinates
     file = testdata_dir / "LAS-0.3x0.4x0.5.nii.gz"
-    t = [[-0.3, 0.0, 0.0, 0.3],
-         [ 0.0, 0.4, 0.0, 0.0],
-         [ 0.0, 0.0, 0.5, 0.0],
+    t = [[-0.3, 0.0, 0.0, 0.3 * max_i[0]],
+         [ 0.0, 0.4, 0.0, 0.0 * max_i[1]],
+         [ 0.0, 0.0, 0.5, 0.0 * max_i[2]],
          [ 0.0, 0.0, 0.0, 1.0]]
     to_nifti(t, file)
     # Source data aligned with LPS anatomical coordinates
     file = testdata_dir / "LPS-3.0x3.1x3.2.nii.gz"
-    t = [[-3.0,  0.0, 0.0, 3.0],
-         [ 0.0, -3.1, 0.0, 3.1],
-         [ 0.0,  0.0, 3.2, 0.0],
+    t = [[-3.0,  0.0, 0.0, 3.0 * max_i[0]],
+         [ 0.0, -3.1, 0.0, 3.1 * max_i[1]],
+         [ 0.0,  0.0, 3.2, 0.0 * max_i[2]],
          [ 0.0,  0.0, 0.0, 1.0]]
     to_nifti(t, file)
     # Source data aligned with RSA anatomical coordinates
     file = testdata_dir / "RSA-1.0x0.9x1.1.nii.gz"
-    t = [[1.0, 0.0, 0.0, 0.0],
-         [0.0, 0.0, 1.1, 0.0],
-         [0.0, 0.9, 0.0, 0.0],
+    t = [[1.0, 0.0, 0.0, 0.0 * max_i[0]],
+         [0.0, 0.0, 1.1, 0.0 * max_i[1]],
+         [0.0, 0.9, 0.0, 0.0 * max_i[2]],
          [0.0, 0.0, 0.0, 1.0]]
     to_nifti(t, file)
     # Source data aligned with SLP anatomical coordinates
     file = testdata_dir / "SLP-0.9x0.8x0.5.nii.gz"
-    t = [[0.0, -0.8,  0.0, 0.8],
-         [0.0,  0.0, -0.5, 0.5],
-         [0.9,  0.0,  0.0, 0.0],
+    t = [[0.0, -0.8,  0.0, 0.8 * max_i[0]],
+         [0.0,  0.0, -0.5, 0.5 * max_i[1]],
+         [0.9,  0.0,  0.0, 0.0 * max_i[2]],
          [0.0,  0.0,  0.0, 1.0]]
     to_nifti(t, file)
     # Source data aligned with IPL anatomical coordinates
     file = testdata_dir / "IPL-3.0x9.0x0.1.nii.gz"
-    t = [[ 0.0,  0.0, -0.1, 0.1],
-         [ 0.0, -9.0,  0.0, 9.0],
-         [-3.0,  0.0,  0.0, 3.0],
+    t = [[ 0.0,  0.0, -0.1, 0.1 * max_i[0]],
+         [ 0.0, -9.0,  0.0, 9.0 * max_i[1]],
+         [-3.0,  0.0,  0.0, 3.0 * max_i[2]],
          [ 0.0,  0.0,  0.0, 1.0]]
     to_nifti(t, file)
     # Source data *almost* aligned with RAI anatomical coordinates
@@ -202,23 +203,23 @@ def generate_test_data():
 
     # Source data aligned with IRA anatomical coordinates, NRRD system: RAS
     file = testdata_dir / "IRA2RAS-0.1x0.2x0.4.nrrd"
-    t = [[ 0.0, 0.2, 0.0, 0.0],
-         [ 0.0, 0.0, 0.4, 0.0],
-         [-0.1, 0.0, 0.0, 0.1],
+    t = [[ 0.0, 0.2, 0.0, 0.0 * max_i[0]],
+         [ 0.0, 0.0, 0.4, 0.0 * max_i[1]],
+         [-0.1, 0.0, 0.0, 0.1 * max_i[2]],
          [ 0.0, 0.0, 0.0, 1.0]]
     to_nrrd(t, file, "RAS")
     # Source data aligned with IPR anatomical coordinates, NRRD system: LAS
     file = testdata_dir / "IPR2LAS-2.5x5.2x1.0.nrrd"
-    t = [[ 0.0,  0.0, -1.0, 1.0],
-         [ 0.0, -5.2,  0.0, 5.2],
-         [-2.5,  0.0,  0.0, 2.5],
+    t = [[ 0.0,  0.0, -1.0, 1.0 * max_i[0]],
+         [ 0.0, -5.2,  0.0, 5.2 * max_i[1]],
+         [-2.5,  0.0,  0.0, 2.5 * max_i[2]],
          [ 0.0,  0.0,  0.0, 1.0]]
     to_nrrd(t, file, "LAS")
     # Source data aligned with AIR anatomical coordinates, NRRD system: LPS
     file = testdata_dir / "AIR2LPS-1.0x1.3x3.7.nrrd"
-    t = [[ 0.0,  0.0, -3.7, 3.7],
-         [-1.0,  0.0,  0.0, 1.0],
-         [ 0.0, -1.3,  0.0, 1.3],
+    t = [[ 0.0,  0.0, -3.7, 3.7 * max_i[0]],
+         [-1.0,  0.0,  0.0, 1.0 * max_i[1]],
+         [ 0.0, -1.3,  0.0, 1.3 * max_i[2]],
          [ 0.0,  0.0,  0.0, 1.0]]
     to_nrrd(t, file, "LPS")
     # Source data *almost* aligned with LAI anatomical coordinates, NRRD system: LAS
