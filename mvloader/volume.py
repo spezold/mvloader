@@ -292,7 +292,7 @@ class Volume:
         return Volume(src_voxel_data=src_voxel_data, src_transformation=self.__vsrc2csrc_4x4.copy(),
                       src_system=self.__src_system, system=self.__user_system, src_object=self.__src_object)
 
-    def copy_like(self, template):
+    def copy_like(self, template, deep=True):
         """
         Create a copy of the current instance, rearranging the following data to match the respective entries of
         ``template``: (1) ``src_volume``, (2) ``src_system``, (3) ``aligned_volume``, (4) ``system``.
@@ -301,6 +301,11 @@ class Volume:
         ----------
         template : Volume
             The instance whose order of ``src_volume`` voxels and whose world coordinate systems should be adopted.
+        deep : bool, optional
+            If `True` (default), a copy of the current instance's ``aligned_volume`` Numpy array will be created for the
+            new instance; if `False`, the ``*_volume`` arrays of the new instance will be a view into said array
+            whenever possible. In either case, (1) ``src_object`` will be shared by both instances and (2) the
+            transformation matrices will be copies for the new instance.
 
         Returns
         -------
@@ -321,7 +326,7 @@ class Volume:
         cur_suser_2_tpl_vsrc_3x3 = tpl_vuser_2_tpl_vsrc_3x3 @ cur_suser_2_tpl_suser_3x3
         offset_4x4 = ac.offset(cur_suser_2_tpl_vsrc_3x3, current_instance.__aligned_volume.shape)
         cur_vuser_2_tpl_vsrc_4x4 = ac.homogeneous_matrix(cur_suser_2_tpl_vsrc_3x3) @ offset_4x4
-        cur_aligned_volume_swapped = ac.swap(current_instance.__aligned_volume, cur_vuser_2_tpl_vsrc_4x4)
+        cur_aligned_volume_swapped = ac.swap(current_instance.__aligned_volume, cur_vuser_2_tpl_vsrc_4x4, copy=deep)
 
         # Calculate respective transformation to world coordinates for the swapped aligned array
         swapped_vsrc_2_cur_cuser_4x4 = ac.transformation_for_new_voxel_alignment(current_instance.__vuser2cuser_4x4, np.linalg.inv(cur_vuser_2_tpl_vsrc_4x4))
