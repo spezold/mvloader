@@ -58,6 +58,24 @@ def random_transformation_matrix(verbose=False):
     return transformation
 
 
+def random_coordinate_system_triple(verbose=False):
+
+    opposites = {'R': "L", 'A': "P", 'S': "I", 'L': "R", 'P': "A", 'I': "S"}
+    triple = ""
+
+    choices = list(opposites.keys())
+    for unused in range(3):
+        letter = np.random.choice(choices)
+        choices.remove(letter)
+        choices.remove(opposites[letter])
+        triple += letter
+
+    if verbose:
+        print(triple)
+
+    return triple
+
+
 def random_voxel_data(size=(10, 10, 10)):
 
     voxel_data = np.random.normal(size=size)

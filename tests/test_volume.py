@@ -10,7 +10,7 @@ import unittest
 from mvloader import nifti, nrrd
 from mvloader.anatomical_coords import permutation_matrix, find_closest_permutation_matrix
 from mvloader.volume import Volume
-from tests.helpers import transformation_matrix, random_transformation_matrix, random_voxel_data, generate_test_data
+from tests.helpers import transformation_matrix, random_transformation_matrix, random_voxel_data, random_coordinate_system_triple, generate_test_data
 
 
 class TestCreateVolume(unittest.TestCase):
@@ -194,6 +194,20 @@ class TestCreateVolume(unittest.TestCase):
         a = v.aligned_volume
         np.testing.assert_array_almost_equal([np.mean(s), np.std(s)], [np.mean(a), np.std(a)])
 
+        # Test if "get_src_transformation" and "get_aligned_transformation" do what they should
+        dst_system = random_coordinate_system_triple(verbose=False)
+        perm = np.eye(4)
+        perm[:3, :3] = permutation_matrix(v.src_system, dst_system)
+        m_should = perm @ v.src_transformation
+        m_is = v.get_src_transformation(dst_system)
+        np.testing.assert_array_almost_equal(m_should, m_is)
+        dst_system = random_coordinate_system_triple(verbose=False)
+        perm = np.eye(4)
+        perm[:3, :3] = permutation_matrix(v.system, dst_system)
+        m_should = perm @ v.aligned_transformation
+        m_is = v.get_aligned_transformation(dst_system)
+        np.testing.assert_array_almost_equal(m_should, m_is)
+
 
 class TestLoadVolume(unittest.TestCase):
 
@@ -205,7 +219,7 @@ class TestLoadVolume(unittest.TestCase):
         # `src_sytems`:  key: alignment coordinate system triple, value: assumed src_system triple
         self.paths, self.voxel_sizes, self.src_systems, self.almost_aligneds = self._assemble_metadata_from_filenames()
 
-    def testAll(self):
+    def testAll(self):  # TODO: Maybe use subTest (cf. https://docs.python.org/3.4/library/unittest.html#distinguishing-test-iterations-using-subtests)
 
         for alignment_triple in sorted(self.paths.keys()):
 
@@ -296,7 +310,7 @@ class TestLoadVolume(unittest.TestCase):
 
 class TestCopyVolume(TestLoadVolume):
 
-    def testAll(self):
+    def testAll(self):  # TODO: Maybe use subTest (cf. https://docs.python.org/3.4/library/unittest.html#distinguishing-test-iterations-using-subtests)
 
         is_deep_copy = lambda a, b: not np.may_share_memory(a, b)
 
@@ -325,7 +339,7 @@ class TestCopyVolume(TestLoadVolume):
                 self.assertEqual(v_src_copy.src_system, v_dst.src_system, msg=err_msg)
                 self.assertEqual(v_src_copy.system, v_dst.system, msg=err_msg)
 
-                # 1.2. The closest permutation matrices should match
+                # 1.2. All closest permutation matrices should match
                 np.testing.assert_array_equal(find_closest_permutation_matrix(v_src_copy.src_transformation[:3, :3]),
                                               find_closest_permutation_matrix(v_dst.src_transformation[:3, :3]), err_msg=err_msg)
                 np.testing.assert_array_equal(find_closest_permutation_matrix(v_src_copy.aligned_transformation[:3, :3]),
@@ -338,9 +352,14 @@ class TestCopyVolume(TestLoadVolume):
                 # 2.1. Check if deep copies are deep and shallow copies are shallow
                 self.assertEqual(deep, is_deep_copy(v_src_copy.aligned_volume, v_src.aligned_volume), msg=err_msg)
 
-                # 2.2. When aligned to the same user system, array contents should match
+                # 2.2. When aligned to the same user system, array contents, transformations, and spacings should match
                 v_src_copy.system = v_src.system
                 np.testing.assert_array_equal(v_src_copy.aligned_volume, v_src.aligned_volume, err_msg=err_msg)
+                np.testing.assert_array_almost_equal(v_src_copy.aligned_spacing, v_src.aligned_spacing)
+                np.testing.assert_array_almost_equal(v_src_copy.aligned_transformation, v_src.aligned_transformation)
+
+                # 2.3. The source objects should match
+                self.assertIs(v_src.src_object, v_src_copy.src_object, msg=err_msg)
 
 
 if __name__ == "__main__":
