@@ -332,7 +332,7 @@ class Volume:
         swapped_vsrc_2_cur_cuser_4x4 = ac.transformation_for_new_voxel_alignment(current_instance.__vuser2cuser_4x4, np.linalg.inv(cur_vuser_2_tpl_vsrc_4x4))
         swapped_vsrc_2_tpl_csrc_4x4 = ac.transformation_for_new_coordinate_system(swapped_vsrc_2_cur_cuser_4x4, ac.permutation_matrix(src=cur_suser, dst=tpl_ssrc))
 
-        return Volume(src_voxel_data=cur_aligned_volume_swapped, src_transfromation=swapped_vsrc_2_tpl_csrc_4x4,
+        return Volume(src_voxel_data=cur_aligned_volume_swapped, src_transformation=swapped_vsrc_2_tpl_csrc_4x4,
                       src_system=tpl_ssrc, system=tpl_suser, src_object=current_instance.__src_object)
 
 
