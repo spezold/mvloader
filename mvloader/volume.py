@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Provide a class that represents 3D scan volumes in a desired anatomical
-coordinate system.
+Provide a class that represents 3D scan volumes in a desired anatomical coordinate system.
 """
 
 import numpy as np
@@ -67,8 +66,8 @@ class Volume:
         self.__vuser2cuser_4x4 = None
         # ^ Mapping from ``aligned_volume``'s voxel indices to the desired anatomical coordinate system
 
-        # Mapping from ``src_volume`` voxel indices to ``aligned_volume`` voxel indices and vice versa (including offset
-        # into the array)
+        # Mapping from ``src_volume``'s voxel indices to ``aligned_volume`` voxel indices and vice versa (including
+        # offset into the array)
         self.__vsrc2vuser_4x4 = None
         self.__vuser2vsrc_4x4 = None
 
@@ -110,20 +109,23 @@ class Volume:
 
         offset_4x4 = ac.offset(vsrc2suser_3x3, self.__src_volume.shape)
         # Transform: given source array indices -> user system aligned array indices
-        self.__vsrc2vuser_4x4 = vsrc2vuser_4x4 = ac.homogeneous_matrix(vsrc2suser_3x3) @ offset_4x4
+        vsrc2vuser_4x4 = ac.homogeneous_matrix(vsrc2suser_3x3) @ offset_4x4
         # Transform: user system aligned array indices -> given source array indices
-        self.__vuser2vsrc_4x4 = vuser2vsrc_4x4 = np.round(np.linalg.inv(vsrc2vuser_4x4)).astype(vsrc2vuser_4x4.dtype)
+        vuser2vsrc_4x4 = np.round(np.linalg.inv(vsrc2vuser_4x4)).astype(vsrc2vuser_4x4.dtype)
 
         # Transform: given source array indices -> user system coordinates
-        self.__vsrc2cuser_4x4 = vsrc2cuser_4x4 = ac.transformation_for_new_coordinate_system(trans=vsrc2csrc_4x4, sold2snew=ssrc2suser_3x3)
+        vsrc2cuser_4x4 = ac.transformation_for_new_coordinate_system(trans=vsrc2csrc_4x4, sold2snew=ssrc2suser_3x3)
         # Transform: user system aligned array indices -> user system coordinates
-        self.__vuser2cuser_4x4 = vuser2cuser_4x4 = ac.transformation_for_new_voxel_alignment(trans=vsrc2cuser_4x4, vnew2vold=vuser2vsrc_4x4)
+        vuser2cuser_4x4 = ac.transformation_for_new_voxel_alignment(trans=vsrc2cuser_4x4, vnew2vold=vuser2vsrc_4x4)
+
+        self.__vsrc2vuser_4x4 = vsrc2vuser_4x4
+        self.__vuser2vsrc_4x4 = vuser2vsrc_4x4
+        self.__vsrc2cuser_4x4 = vsrc2cuser_4x4
+        self.__vuser2cuser_4x4 = vuser2cuser_4x4
 
         # Recalculate voxel sizes ("spacing")
-        m = vsrc2csrc_4x4
-        self.__src_spacing = tuple(np.linalg.norm(m[:ndim, :ndim], axis=0))
-        m = vuser2cuser_4x4
-        self.__aligned_spacing = tuple(np.linalg.norm(m[:ndim, :ndim], axis=0))
+        self.__src_spacing = tuple(np.linalg.norm(vsrc2csrc_4x4[:ndim, :ndim], axis=0))
+        self.__aligned_spacing = tuple(np.linalg.norm(vuser2cuser_4x4[:ndim, :ndim], axis=0))
 
         # Actually swap the given source array
         self.__aligned_volume = ac.swap(self.__src_volume, vsrc2vuser_4x4)
@@ -153,7 +155,7 @@ class Volume:
         """
         Returns
         -------
-        ndarray
+        numpy.ndarray
             The :math:`4x4` transformation matrix that maps from ``src_volume``'s voxel indices to the *original*
             anatomical world coordinate system ``src_system`` (new copy).
         """
@@ -164,7 +166,7 @@ class Volume:
         """
         Returns
         -------
-        ndarray
+        numpy.ndarray
             The :math:`4x4` transformation matrix that maps from ``aligned_volume``'s voxel indices to the *desired*
             anatomical world coordinate system ``system`` (new copy).
         """
@@ -175,7 +177,7 @@ class Volume:
         """
         Returns
         -------
-        ndarray
+        numpy.ndarray
             The :math:`4x4` transformation matrix that maps from ``src_volume``'s voxel indices to the *desired*
             anatomical world coordinate system ``system`` (new copy).
         """
@@ -186,7 +188,7 @@ class Volume:
         """
         Returns
         -------
-        ndarray
+        numpy.ndarray
             The 3-dimensional Numpy array that contains the original voxel data.
         """
         return self.__src_volume
@@ -196,7 +198,7 @@ class Volume:
         """
         Returns
         -------
-        ndarray
+        numpy.ndarray
             The 3-dimensional Numpy array that contains the image information with the voxel data axes aligned to the
             desired anatomical world coordinate system ``system`` as closely as is possible without reinterpolation.
             This means, for example, if ``system`` is "RAS", then ``aligned_volume`` will hold an array where
@@ -239,7 +241,7 @@ class Volume:
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             The resulting :math:`4x4` transformation matrix.
 
         See also
@@ -262,7 +264,7 @@ class Volume:
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             The resulting :math:`4x4` transformation matrix.
 
         See also
