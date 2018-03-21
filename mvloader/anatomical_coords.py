@@ -68,7 +68,7 @@ def find_closest_permutation_matrix(trans):
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
         The resulting :math:`d×d` permutation-reflection matrix (containing only integers 0, 1, and -1).
     """
     trans_abs = ma.masked_array(np.abs(trans) / (np.linalg.norm(trans, axis=0)[np.newaxis, :]), mask=(np.zeros_like(trans, dtype=np.bool)))
@@ -95,7 +95,7 @@ def must_be_flipped(perm):
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
         A :math:`d`-dimensional vector holding a one for the axes of the original array that need to be flipped and a
         zero for the others.
     """
@@ -108,20 +108,20 @@ def offset(perm, shape):
     Calculate the offset to be added on the indices of the original array to end up with the indices of the array that
     results from swapping according to `perm`.
 
-    This means that if `r` is the output of this function, then `perm @ r` maps form indices in the original array to
-    indices in the swapped array.
+    This means that if `r` is the :math:`4×4` output of this function, then `homogeneous_matrix(perm[:3, :3]) @ r` maps
+    form indices in the original array to indices in the swapped array.
 
     Parameters
     ----------
     perm : array_like
-        A :math:`d×d` matrix that gives the permutations and reflections for swapping. If more values are given, the
-        upper left :math:`d×d` area is considered.
+        A :math:`d×d` matrix that gives the permutations and reflections for swapping, where `d` is implied by
+        `len(shape)`. If more values are given, the upper left :math:`d×d` area is considered.
     shape : array_like
-        Tuple of :math: `d` values that give the shape of the original array (i.e. before swapping).
+        Tuple of :math:`d` values that give the shape of the original array (i.e. before swapping).
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
         A :math:`(d+1)×(d+1)` matrix that holds the calculated offset as its translational part.
     """
     ndim = len(shape)
@@ -151,7 +151,7 @@ def swap(a, perm, copy=False):
         does not share data with `a`.
     Returns
     -------
-    ndarray
+    numpy.ndarray
         The :math:`d`-dimensional array that results from swapping.
     """
     a = a.copy() if copy else a
@@ -279,7 +279,7 @@ def get_rotational_part(trans):
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
         The rotational part, with potential scaling removed.
     """
     result_with_scaling = trans[:-1, :-1]
@@ -315,7 +315,7 @@ def transformation_for_new_voxel_alignment(trans, vnew2vold):
     """
     Calculate a new transformation matrix, based on a given transformation matrix (which maps from given voxel indices
     to a given coordinate system) and a voxel-alignment transformation matrix (which maps from the *desired* voxel
-    indices to the *given* voxel indices).
+    indices to the *given* voxel indices, including offsets).
 
     Parameters
     ----------
@@ -336,13 +336,13 @@ def transformation_for_new_voxel_alignment(trans, vnew2vold):
 
 def validate_permutation_matrix(perm):
     """
-    Validate a permutation-reflection matrix. A matrix is considered valid if (1) its determinant is either 1 or
-    -1 and (2) all of its values are either -1, 0, or 1.
+    Validate a permutation-reflection matrix. A matrix is considered valid if (1) its determinant is either exactly 1 or
+    or exactly -1 and (2) all of its values are either -1, 0, or 1.
 
     Parameters
     ----------
     perm : array_like
-        The (d, d)-shaped Numpy array to be validated.
+        The :math:`d×d` matrix to be validated.
 
     Returns
     -------
@@ -371,7 +371,7 @@ def validate_transformation_matrix(mat, tol=1e-3):
     Parameters
     ----------
     mat : array_like
-        The (d, d)-shaped Numpy array to be validated.
+        The :math:`d×d` matrix to be validated.
     tol : float
         Tolerance for absolute value `v` of the rotational part's determinant: if :math:`(1 - tol) <= v <= (1 + tol)`,
         then `v` is considered close to one (default: 1e-3; arbitrary choice).
@@ -386,10 +386,8 @@ def validate_transformation_matrix(mat, tol=1e-3):
     ValueError
         If the matrix is invalid.
     """
-    # Account for potential scaling: dividing by the column's norms leaves us with the pure rotational part
-    rot_part = mat[:-1, :-1]
-    scaling = np.linalg.norm(rot_part, axis=0)
-    rot_part = rot_part * (1 / scaling[np.newaxis, :])
+    # Account for potential scaling
+    rot_part = get_rotational_part(mat)
 
     abs_det = np.abs(np.linalg.det(rot_part))
     msg = ""
