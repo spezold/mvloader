@@ -351,7 +351,7 @@ def transformation_for_new_voxel_alignment(trans, vnew2vold):
     numpy.ndarray
         The resulting new :math:`(d+1)×(d+1)` transformation matrix.
     """
-    vold2cold = trans
+    vold2cold = np.asarray(trans)  # Ensure that "@" will work
     result = vold2cold @ vnew2vold
     return result
 
