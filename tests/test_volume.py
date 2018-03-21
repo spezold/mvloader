@@ -8,7 +8,7 @@ import shutil
 import unittest
 
 from mvloader import nifti, nrrd
-from mvloader.anatomical_coords import permutation_matrix
+from mvloader.anatomical_coords import permutation_matrix, find_closest_permutation_matrix
 from mvloader.volume import Volume
 from tests.helpers import transformation_matrix, random_transformation_matrix, random_voxel_data, generate_test_data
 
@@ -293,9 +293,54 @@ class TestLoadVolume(unittest.TestCase):
 
         shutil.rmtree(self._testdata_dir)
 
-    # TODO: Continue here: copying
 
+class TestCopyVolume(TestLoadVolume):
 
+    def testAll(self):
+
+        is_deep_copy = lambda a, b: not np.may_share_memory(a, b)
+
+        i = 0
+
+        for alignment_triple_src in sorted(self.paths.keys()):
+
+            path_src = self.paths[alignment_triple_src]
+            v_src = nrrd.open_image(path_src, verbose=False) if path_src.endswith(".nrrd") else nifti.open_image(path_src, verbose=False)
+
+            for alignment_triple_dst in sorted(self.paths.keys()):
+
+                i += 1
+
+                deep = bool(i % 2)  # Alternate between "deep" and "shallow" copies
+
+                path_dst = self.paths[alignment_triple_dst]
+                v_dst = nrrd.open_image(path_dst, verbose=False) if path_dst.endswith(".nrrd") else nifti.open_image(path_dst, verbose=False)
+
+                v_src_copy = v_src.copy_like(v_dst, deep=deep)
+                err_msg = "{} -> {}".format(alignment_triple_src, alignment_triple_dst)
+
+                # 1. Compare copy to template
+
+                # 1.1. Systems should be the same
+                self.assertEqual(v_src_copy.src_system, v_dst.src_system, msg=err_msg)
+                self.assertEqual(v_src_copy.system, v_dst.system, msg=err_msg)
+
+                # 1.2. The closest permutation matrices should match
+                np.testing.assert_array_equal(find_closest_permutation_matrix(v_src_copy.src_transformation[:3, :3]),
+                                              find_closest_permutation_matrix(v_dst.src_transformation[:3, :3]), err_msg=err_msg)
+                np.testing.assert_array_equal(find_closest_permutation_matrix(v_src_copy.aligned_transformation[:3, :3]),
+                                              find_closest_permutation_matrix(v_dst.aligned_transformation[:3, :3]), err_msg=err_msg)
+                np.testing.assert_array_equal(find_closest_permutation_matrix(v_src_copy.src_to_aligned_transformation[:3, :3]),
+                                              find_closest_permutation_matrix(v_dst.src_to_aligned_transformation[:3, :3]), err_msg=err_msg)
+
+                # 2. Compare copy to original
+
+                # 2.1. Check if deep copies are deep and shallow copies are shallow
+                self.assertEqual(deep, is_deep_copy(v_src_copy.aligned_volume, v_src.aligned_volume), msg=err_msg)
+
+                # 2.2. When aligned to the same user system, array contents should match
+                v_src_copy.system = v_src.system
+                np.testing.assert_array_equal(v_src_copy.aligned_volume, v_src.aligned_volume, err_msg=err_msg)
 
 
 if __name__ == "__main__":
