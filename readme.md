@@ -510,6 +510,13 @@ functions.
 History
 -------
 
+### (2018-03-21)
+
+I rewrote critical parts of the `Volume` class; in particular, boundary
+cases where a rotation results in mapping two axes to the same axis in
+`anatomical_coords.find_closest_permutation_matrix` should now be
+handled properly. Also: more tests.
+
 ### (2018-02-15)
 
 *MVloader* resulted from my PhD work. The different parts grew between
