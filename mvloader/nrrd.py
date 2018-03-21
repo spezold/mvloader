@@ -211,7 +211,7 @@ def __matrix_from(header):
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
         The resulting :math:`4x4` transformation matrix.
     """
     try:
