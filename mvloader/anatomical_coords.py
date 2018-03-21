@@ -14,7 +14,7 @@ from numpy import ma
 opposites = {'R': "L", 'A': "P", 'S': "I", 'L': "R", 'P': "A", 'I': "S"}
 
 
-def permutation_matrix(src, dst):
+def permutation_matrix(src, dst):  # TODO: test cases
     """
     Calculate the permutation-reflection matrix that maps axes from the given source anatomical coordinate system to the
     given destination anatomical coordinate system, as well as its inverse.
