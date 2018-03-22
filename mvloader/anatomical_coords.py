@@ -31,7 +31,7 @@ def permutation_matrix(src, dst):  # TODO: test cases
     Returns
     -------
     numpy.ndarray
-        The :math:`3x3` permutation-reflection matrix that maps coordinates from the ``src`` system to the ``dst``
+        The :math:`3×3` permutation-reflection matrix that maps coordinates from the ``src`` system to the ``dst``
         system. A minus one signifies a swapped axis direction (e.g. "L" in `src`` becomes "R" in ``dst``). Note that
         the inverse mapping is given by the result's transpose.
     """

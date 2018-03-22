@@ -30,7 +30,7 @@ class Volume:
         A three-dimensional array that contains the image voxels, arranged to match the coordinate transformation
         matrix ``src_transformation``.
     src_transformation : array_like
-        A :math:`4x4` matrix that describes the mapping from voxel indices in ``src_voxel_data`` to the given anatomical
+        A :math:`4×4` matrix that describes the mapping from voxel indices in ``src_voxel_data`` to the given anatomical
         world coordinate system ``src_system``.
     src_system : str
         A three-character string that describes the anatomical world coordinate system for the provided
@@ -156,7 +156,7 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The :math:`4x4` transformation matrix that maps from ``src_volume``'s voxel indices to the *original*
+            The :math:`4×4` transformation matrix that maps from ``src_volume``'s voxel indices to the *original*
             anatomical world coordinate system ``src_system`` (new copy).
         """
         return self.__vsrc2csrc_4x4.copy()
@@ -167,7 +167,7 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The :math:`4x4` transformation matrix that maps from ``aligned_volume``'s voxel indices to the *desired*
+            The :math:`4×4` transformation matrix that maps from ``aligned_volume``'s voxel indices to the *desired*
             anatomical world coordinate system ``system`` (new copy).
         """
         return self.__vuser2cuser_4x4.copy()
@@ -178,7 +178,7 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The :math:`4x4` transformation matrix that maps from ``src_volume``'s voxel indices to the *desired*
+            The :math:`4×4` transformation matrix that maps from ``src_volume``'s voxel indices to the *desired*
             anatomical world coordinate system ``system`` (new copy).
         """
         return self.__vsrc2cuser_4x4.copy()
@@ -242,7 +242,7 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The resulting :math:`4x4` transformation matrix.
+            The resulting :math:`4×4` transformation matrix.
 
         See also
         --------
@@ -265,7 +265,7 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The resulting :math:`4x4` transformation matrix.
+            The resulting :math:`4×4` transformation matrix.
 
         See also
         --------

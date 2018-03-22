@@ -98,12 +98,12 @@ def generate_test_data():
 
     def transform(array, transformation):
 
-        # If `transformation` is a 3x3 matrix, also calculate the respective 4x4 transformation matrix, with
+        # If `transformation` is a 3×3 matrix, also calculate the respective 4×4 transformation matrix, with
         # the offset calculated to have the origin at the testdata voxel with value zero
 
         def offset(perm, shape):
 
-            # 4x4 matrix to be premultiplied
+            # 4×4 matrix to be premultiplied
 
             must_be_flipped = lambda p: (np.sum(p, axis=0) < 0).astype(int)
 

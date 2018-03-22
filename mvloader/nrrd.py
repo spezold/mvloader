@@ -70,7 +70,7 @@ def save_image(path, data, transformation, system="RAS", kinds=None):
     data : array_like
         Three-dimensional array that contains the voxels to be saved.
     transformation : array_like
-        :math:`4x4` transformation matrix that maps from ``data``'s voxel indices to the given ``system``'s anatomical
+        :math:`4×4` transformation matrix that maps from ``data``'s voxel indices to the given ``system``'s anatomical
         world coordinate system.
     system : str, optional
         The world coordinate system to which ``transformation`` maps the voxel data. Either "RAS" (default), "LAS", or
@@ -212,7 +212,7 @@ def __matrix_from(header):
     Returns
     -------
     numpy.ndarray
-        The resulting :math:`4x4` transformation matrix.
+        The resulting :math:`4×4` transformation matrix.
     """
     try:
         space_directions = header["space directions"]

@@ -91,7 +91,7 @@ def save_image(path, data, transformation):
     data : array_like
         Three-dimensional array that contains the voxels to be saved.
     transformation : array_like
-        :math:`4x4` transformation matrix that maps from ``data``'s voxel indices to a RAS anatomical world coordinate
+        :math:`4×4` transformation matrix that maps from ``data``'s voxel indices to a RAS anatomical world coordinate
         system.
     """
     nibabel.Nifti1Image(data, transformation).to_filename(path)

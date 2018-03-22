@@ -67,7 +67,7 @@ crucial for medical applications.
 Medical image formats therefore provide a mapping from voxel indices
 to a patient-based world coordinate system: Via rotation, scaling, and
 translation, we may map from voxel indices to patient coordinates.
-Using homogeneous coordinates, we can store this mapping in a *4x4*
+Using homogeneous coordinates, we can store this mapping in a *4×4*
 matrix `M`:
 ```python
 r_11, r_12, r_13, r_21, r_22, r_23, r_31, r_32, r_33 = ...  # rotation
@@ -207,7 +207,7 @@ volume's voxel data as three-dimensional NumPy arrays:
 
 ### Transformation matrix representations
 
-Each `Volume` instance provides three 4x4 transformation matrices to map
+Each `Volume` instance provides three 4×4 transformation matrices to map
 from voxel indices to anatomical world coordinates:
 
 * `src_transformation` maps from `src_volume`'s voxel indices to the
