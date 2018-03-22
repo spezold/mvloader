@@ -510,6 +510,12 @@ functions.
 History
 -------
 
+### (2018-03-22)
+
+Updated the import of ``pydicom`` to handle both ``pydicom`` < 1.0 and
+``pydicom`` ≥ 1.0 (cf. ``pydicom``'s
+[transition guide](https://pydicom.github.io/pydicom/stable/transition_to_pydicom1.html)).
+
 ### (2018-03-21)
 
 I rewrote critical parts of the `Volume` class; in particular, boundary
