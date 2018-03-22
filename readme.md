@@ -12,7 +12,8 @@ Installing MVloader
 -------------------
 
 *MVloader* can be installed using *pip* or *pip3*, depending on your
-system:
+system, from its *github* repository (requiring *git* being installed on
+your system in either case):
 ```shell
 pip install git+https://github.com/spezold/mvloader.git
 pip3 install git+https://github.com/spezold/mvloader.git
@@ -20,7 +21,8 @@ pip3 install git+https://github.com/spezold/mvloader.git
 
 This should also work inside *conda*.
 
-*MVloader*'s only dependencies are the underlying image libraries
+*MVloader*'s only remaining dependencies are the underlying image
+libraries
 ([*pydicom*](https://github.com/pydicom/pydicom),
 [*nibabel*](http://nipy.org/nibabel/),
 [*pynrrd*](https://github.com/mhe/pynrrd)) and
