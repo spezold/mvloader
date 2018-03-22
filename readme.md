@@ -247,7 +247,7 @@ We create a new `Volume` instance:
 import numpy as np
 from mvloader.volume import Volume
 
-# Create a simple 10x10x10 volume
+# Create a simple 10×10×10 volume
 given_voxels = np.arange(1000).reshape(10, 10, 10)
 # No rotations or translations from the provided voxel indices to the
 # provided anatomical world coordinate system ...
