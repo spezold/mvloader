@@ -11,7 +11,10 @@ References
 """
 
 
-import dicom
+try:
+    import pydicom  # pydicom >= 1.0
+except ImportError:
+    import dicom as pydicom  # pydicom < 1.0
 import numpy as np
 from pathlib import Path
 
@@ -105,8 +108,8 @@ class SliceStacker:
         
         self.slices = {}
         # ^ A dictionary of all slices (sharing the determined Series Instance UID, if desired). The respective file
-        # name is used as key, the value is a ``dicom.dataset.FileDataset`` instance
-        self.sorted_slices = None  # A list of all slices as ``dicom.dataset.FileDataset`` instances after sorting them
+        # name is used as key, the value is a ``pydicom.dataset.FileDataset`` instance
+        self.sorted_slices = None  # A list of all slices as ``pydicom.dataset.FileDataset`` instances after sorting
         
         self.volume = None  # The stacked image volume as a ``volume.Volume`` instance
         
@@ -132,7 +135,7 @@ class SliceStacker:
             for f in sorted(path.iterdir(), key=lambda p: str(p).lower()):
                 try:
                     # Find the first DICOM file, determine its "Series Instance UID"
-                    dataset = dicom.read_file(str(f.resolve()), stop_before_pixels=True)
+                    dataset = pydicom.read_file(str(f.resolve()), stop_before_pixels=True)
                     self.si_uid = dataset[SliceStacker.SI_UID_TAG].value
                     break
                 except:
@@ -140,7 +143,7 @@ class SliceStacker:
         else:
             self.base_dir = str(path.parent)
             try:
-                dataset = dicom.read_file(str(path), stop_before_pixels=True)
+                dataset = pydicom.read_file(str(path), stop_before_pixels=True)
                 self.si_uid = dataset[SliceStacker.SI_UID_TAG].value
             except:
                 pass
@@ -155,7 +158,7 @@ class SliceStacker:
         path = Path(self.base_dir).resolve()
         for f in path.iterdir():
             try:
-                dataset = dicom.read_file(str(f.resolve()))
+                dataset = pydicom.read_file(str(f.resolve()))
                 if not self.sloppy:
                     dataset_si_uid = dataset[SliceStacker.SI_UID_TAG].value
                     if dataset_si_uid == self.si_uid:
