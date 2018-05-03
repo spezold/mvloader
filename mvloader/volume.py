@@ -107,7 +107,7 @@ class Volume:
         # Swap: given source array axes -> user system axes
         vsrc2suser_3x3 = ssrc2suser_3x3 @ vsrc2ssrc_3x3
 
-        offset_4x4 = ac.offset(vsrc2suser_3x3, self.__src_volume.shape)
+        offset_4x4 = ac.offset(vsrc2suser_3x3, self.__src_volume.shape[:3])
         # Transform: given source array indices -> user system aligned array indices
         vsrc2vuser_4x4 = ac.homogeneous_matrix(vsrc2suser_3x3) @ offset_4x4
         # Transform: user system aligned array indices -> given source array indices
@@ -326,7 +326,7 @@ class Volume:
 
         # Combine, calculate necessary offset, and actually swap current instance's aligned array respectively
         cur_suser_2_tpl_vsrc_3x3 = tpl_vuser_2_tpl_vsrc_3x3 @ cur_suser_2_tpl_suser_3x3
-        offset_4x4 = ac.offset(cur_suser_2_tpl_vsrc_3x3, current_instance.__aligned_volume.shape)
+        offset_4x4 = ac.offset(cur_suser_2_tpl_vsrc_3x3, current_instance.__aligned_volume.shape[:3])
         cur_vuser_2_tpl_vsrc_4x4 = ac.homogeneous_matrix(cur_suser_2_tpl_vsrc_3x3) @ offset_4x4
         cur_aligned_volume_swapped = ac.swap(current_instance.__aligned_volume, cur_vuser_2_tpl_vsrc_4x4, copy=deep)
 
