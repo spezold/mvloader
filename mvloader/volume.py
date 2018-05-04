@@ -30,8 +30,8 @@ class Volume:
     src_voxel_data : array_like
         An :math:`N`-dimensional array (:math:`N≥3`) that contains the image voxels, arranged to match the coordinate
         transformation matrix ``src_transformation``. The array is assumed to contain a 3D image, i.e. three of its
-        dimensions (as specified via ``src_spatial_dimensions``) define its spatial dimensions while the remaining
-        :math:`N-3` dimensions are its time and/or data dimensions. If :math:`N=3`, scalar data is assumed.
+        axes (as specified via ``src_spatial_dimensions``) define its spatial dimensions while the remaining
+        :math:`N-3` axes are its time and/or data dimensions. If :math:`N=3`, scalar data is assumed.
     src_transformation : array_like
         A :math:`4×4` matrix that describes the mapping from voxel indices in ``src_voxel_data`` to the given anatomical
         world coordinate system ``src_system``.
@@ -41,9 +41,9 @@ class Volume:
         example, for voxels and a transformation matrix provided by a DICOM loading library, this should usually be
         "LPS", as this is the assumed world coordinate system of the DICOM standard.
     src_spatial_dimensions : sequence of int, optional
-        The three axes that correspond to the spatial dimensions of the array (default: (0, 1, 2)). The order of the
-        given values is ignored, as the mapping order from voxel indices to the world coordinate system should be
-        handled exclusively by the given ``src_transformation`` matrix.
+        The three axes that correspond to the spatial dimensions of the ``src_voxel_data`` array (default: (0, 1, 2)).
+        The order of the given values is ignored, as the mapping order from voxel indices to the world coordinate system
+        should be handled exclusively by the given ``src_transformation`` matrix.
     system : str, optional
         A three-character string similar to ``src_system``. However, ``system`` should describe the anatomical world
         coordinate system that the *user* assumes/desires. It will also determine the arrangement of the voxel data for
