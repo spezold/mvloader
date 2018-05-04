@@ -153,41 +153,104 @@ def offset(perm, shape):
     return offset_matrix
 
 
-def swap(a, perm, copy=False):
+def pull_spatial_dimensions(a, spatial_dimensions, copy=False):
     """
-    Swap the values in the given volume according to the given permutation-reflection matrix.
+    Bring the given array's :math:`d` spatial dimensions to the front.
 
     Parameters
     ----------
     a : array_like
-        The :math:`d`-dimensional array whose values are to be swapped.
+        The :math:`N`-dimensional array (:math:`N≥d`) whose spatial dimensions are to be pulled.
+    spatial_dimensions : sequence of int
+        A :math:`d`-tuple that gives the positions of the array's spatial dimensions. The first value will end up as
+        axis 0, the second one as axis 1, etc.
+    copy : bool, optional
+        If `False` (default), return a view into the given array `a`; if `True`, return an array that does not share
+        data with `a`.
+
+    Returns
+    -------
+    numpy.ndarray
+        A :math:`d`-dimensional array with the spatial dimensions along the first :math:`d` axes. The order of the
+        remaining axes is unchanged.
+    """
+    a = a.copy() if copy else a
+    a = np.moveaxis(a, source=spatial_dimensions, destination=np.arange(len(spatial_dimensions)))
+    return a
+
+
+def push_spatial_dimensions(a, spatial_dimensions, copy=False):
+    """
+    Bring the given array's :math:`d` spatial dimensions from the front back to their original position.
+
+    Parameters
+    ----------
+    a : array_like
+        The :math:`N`-dimensional array (:math:`N≥d`) whose spatial dimensions are to be pushed back.
+    spatial_dimensions : sequence of int
+        A :math:`d`-tuple that gives the original positions of the array's spatial dimensions. Axis 0 will end up at the
+        first value, axis 1 will end up at the second value, etc.
+    copy : bool, optional
+        If `False` (default), return a view into the given array `a`; if `True`, return an array that does not share
+        data with `a`.
+
+    Returns
+    -------
+    numpy.ndarray
+        A :math:`d`-dimensional array with the :math:`d` spatial dimensions along their original axes. The order of the
+        remaining axes is unchanged.
+    """
+    a = a.copy() if copy else a
+    a = np.moveaxis(a, source=np.arange(len(spatial_dimensions)), destination=spatial_dimensions)
+    return a
+
+
+def swap(a, perm, spatial_dimensions, copy=False):
+    """
+    Swap the :math:`d` spatial dimensions of the given volume according to the given permutation-reflection matrix.
+
+    Parameters
+    ----------
+    a : array_like
+        The :math:`N`-dimensional array (:math:`N≥d`) whose values are to be swapped.
     perm : array_like
         A :math:`d×d` matrix that gives the permutations and reflections for swapping. If more values are given than
-        implied by `a`'s dimensions, the upper left :math:`d×d` area is considered. The given array should represent a
-        permutation-reflection matrix that maps the coordinate axes of one coordinate system exactly onto the axes of
-        another coordinate system.
+        implied by the length of ``spatial_dimensions``, then the upper left :math:`d×d` area is considered. The given
+        array should represent a permutation-reflection matrix that maps the coordinate axes of one coordinate system
+        exactly onto the axes of another coordinate system.
+    spatial_dimensions: sequence of int
+        The :math:`d` spatial dimensions of the array. The order of the given values is ignored, as the mapping order
+        from one coordinate system to the other should be handled exclusively by the given ``perm`` matrix.
     copy : bool, optional
         If `False` (default), return a view into the given array `a` whenever possible; if `True`, return an array that
         does not share data with `a`.
     Returns
     -------
     numpy.ndarray
-        The :math:`d`-dimensional array that results from swapping.
+        The :math:`d`-dimensional array that results from swapping. All axes except for the swapped spatial dimensions
+        remain in their original positions.
     """
     a = a.copy() if copy else a
 
-    ndim = a.ndim
+    spatial_dimensions = sorted(spatial_dimensions)
+    ndim = len(spatial_dimensions)
     perm = perm[:ndim, :ndim]
     validate_permutation_matrix(perm)
 
-    # Reverse values in the necessary axes
+    # Bring spatial dimensions to the front, i.e. to the first ndim axes
+    a = pull_spatial_dimensions(a, spatial_dimensions)
+
+    # Reverse values in the necessary axes of the first ndim dimensions
     flips = must_be_flipped(perm[:ndim, :ndim])
     a = a[tuple(slice(None, None, -1 if f else None) for f in flips)]
 
-    # Permute axes
-    permutations = (np.abs(perm) @ np.arange(ndim)).astype(np.int)
+    # Permute first ndim axes
+    permutations = np.arange(a.ndim)
+    permutations[:ndim] = (np.abs(perm) @ np.arange(ndim)).astype(np.int)
     a = np.transpose(a, axes=permutations)
 
+    # Push ndim spatial dimensions back to their original axes and return
+    a = push_spatial_dimensions(a, spatial_dimensions)
     return a
 
 

@@ -12,7 +12,8 @@ import mvloader.anatomical_coords as ac
 
 class Volume:
     """
-    Volume(src_voxel_data, src_transformation, src_system, system="RAS", src_object=None)
+    Volume(src_voxel_data, src_transformation, src_system,
+           src_spatial_dimensions=(0, 1, 2), system="RAS", src_object=None)
 
     Return an object that represents 3D image volumes in a desired anatomical world coordinate system (``system``;
     default is "RAS"), based on (1) an array that holds the voxels (``src_voxel_data``) and (2) a transformation matrix
@@ -27,8 +28,10 @@ class Volume:
     Parameters
     ----------
     src_voxel_data : array_like
-        A three-dimensional array that contains the image voxels, arranged to match the coordinate transformation
-        matrix ``src_transformation``.
+        An :math:`N`-dimensional array (:math:`N≥3`) that contains the image voxels, arranged to match the coordinate
+        transformation matrix ``src_transformation``. The array is assumed to contain a 3D image, i.e. three of its
+        axes (as specified via ``src_spatial_dimensions``) define its spatial dimensions while the remaining
+        :math:`N-3` axes are its time and/or data dimensions. If :math:`N=3`, scalar data is assumed.
     src_transformation : array_like
         A :math:`4×4` matrix that describes the mapping from voxel indices in ``src_voxel_data`` to the given anatomical
         world coordinate system ``src_system``.
@@ -37,6 +40,10 @@ class Volume:
         ``src_transformation`` matrix. Any permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used. For
         example, for voxels and a transformation matrix provided by a DICOM loading library, this should usually be
         "LPS", as this is the assumed world coordinate system of the DICOM standard.
+    src_spatial_dimensions : sequence of int, optional
+        The three axes that correspond to the spatial dimensions of the ``src_voxel_data`` array (default: (0, 1, 2)).
+        The order of the given values is ignored, as the mapping order from voxel indices to the world coordinate system
+        should be handled exclusively by the given ``src_transformation`` matrix.
     system : str, optional
         A three-character string similar to ``src_system``. However, ``system`` should describe the anatomical world
         coordinate system that the *user* assumes/desires. It will also determine the arrangement of the voxel data for
@@ -46,7 +53,8 @@ class Volume:
         ``src_voxel_data`` and ``src_transformation`` -- for debugging, for example (default: None).
     """
 
-    def __init__(self, src_voxel_data, src_transformation, src_system, system="RAS", src_object=None):
+    def __init__(self, src_voxel_data, src_transformation, src_system,
+                 src_spatial_dimensions=(0, 1, 2), system="RAS", src_object=None):
 
         self.__src_system = src_system
         self.__user_system = None
@@ -60,6 +68,8 @@ class Volume:
         self.__src_volume = src_voxel_data  # The source voxel data
         self.__vsrc2cuser_4x4 = None
         # ^ Mapping from ``src_volume``'s voxel indices to the desired anatomical coordinate system
+        self.__src_spatial_dimensions = tuple(sorted(src_spatial_dimensions))  # Remaining dimensions are time or data
+        self.__src_spatial_shape = tuple(self.__src_volume.shape[i] for i in self.__src_spatial_dimensions)
 
         self.__aligned_spacing = None
         self.__aligned_volume = None
@@ -107,7 +117,7 @@ class Volume:
         # Swap: given source array axes -> user system axes
         vsrc2suser_3x3 = ssrc2suser_3x3 @ vsrc2ssrc_3x3
 
-        offset_4x4 = ac.offset(vsrc2suser_3x3, self.__src_volume.shape)
+        offset_4x4 = ac.offset(vsrc2suser_3x3, self.__src_spatial_shape)
         # Transform: given source array indices -> user system aligned array indices
         vsrc2vuser_4x4 = ac.homogeneous_matrix(vsrc2suser_3x3) @ offset_4x4
         # Transform: user system aligned array indices -> given source array indices
@@ -127,8 +137,10 @@ class Volume:
         self.__src_spacing = tuple(np.linalg.norm(vsrc2csrc_4x4[:ndim, :ndim], axis=0))
         self.__aligned_spacing = tuple(np.linalg.norm(vuser2cuser_4x4[:ndim, :ndim], axis=0))
 
-        # Actually swap the given source array
-        self.__aligned_volume = ac.swap(self.__src_volume, vsrc2vuser_4x4)
+        # Actually swap the given source array, then bring the spatial dimensions to the front
+        aligned_volume = ac.swap(self.__src_volume, vsrc2vuser_4x4, self.__src_spatial_dimensions)
+        aligned_volume = ac.pull_spatial_dimensions(aligned_volume, self.__src_spatial_dimensions)
+        self.__aligned_volume = aligned_volume
 
     @property
     def src_system(self):
@@ -139,6 +151,16 @@ class Volume:
             The original anatomical world coordinate system as a three-character string.
         """
         return self.__src_system
+
+    @property
+    def src_spatial_dimensions(self):
+        """
+        Returns
+        -------
+        tuple
+            In ascending order , the three axes that contain spatial dimensions in ``src_volume``.
+        """
+        return self.__src_spatial_dimensions
 
     @property
     def src_object(self):
@@ -189,7 +211,7 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The 3-dimensional Numpy array that contains the original voxel data.
+            The :math:`N`-dimensional Numpy array (:math:`N≥3`) that contains the original voxel data.
         """
         return self.__src_volume
 
@@ -199,12 +221,14 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The 3-dimensional Numpy array that contains the image information with the voxel data axes aligned to the
-            desired anatomical world coordinate system ``system`` as closely as is possible without reinterpolation.
-            This means, for example, if ``system`` is "RAS", then ``aligned_volume`` will hold an array where
-            increasing the index on axis 0 will reach a voxel coordinate that is typically more to the right side of
-            the imaged subject, increasing the index on axis 1 will reach a voxel coordinate that is more anterior,
-            and increasing the index on axis 2 will reach a voxel coordinate that is more superior.
+            The :math:`N`-dimensional Numpy array (:math:`N≥3`) that contains the image information with the voxel data
+            axes aligned to the desired anatomical world coordinate system ``system`` as closely as is possible without
+            reinterpolation. The three spatial dimensions are brought to the front (i.e. axes 0, 1, 2), the remaining
+            dimensions (time and/or data dimensions) are brought to the back, keeping their original order. This means,
+            for example, if ``system`` is "RAS", then ``aligned_volume`` will hold an array where increasing the index
+            on axis 0 will reach a voxel coordinate that is typically more to the right side of the imaged subject,
+            increasing the index on axis 1 will reach a voxel coordinate that is more anterior, and increasing the index
+            on axis 2 will reach a voxel coordinate that is more superior.
         """
         return self.__aligned_volume
 
@@ -294,7 +318,7 @@ class Volume:
         return Volume(src_voxel_data=src_voxel_data, src_transformation=self.__vsrc2csrc_4x4.copy(),
                       src_system=self.__src_system, system=self.__user_system, src_object=self.__src_object)
 
-    def copy_like(self, template, deep=True):
+    def copy_like(self, template, src_spatial_dimensions=None, deep=True):
         """
         Create a copy of the current instance, rearranging the following data to match the respective entries of
         ``template``: (1) ``src_volume``, (2) ``src_system``, (3) ``aligned_volume``, (4) ``system``.
@@ -303,6 +327,13 @@ class Volume:
         ----------
         template : Volume
             The instance whose order of ``src_volume`` voxels and whose world coordinate systems should be adopted.
+        src_spatial_dimensions : None or sequence of int, optional
+            The axes on which the spatial dimensions should end up in the new instance's ``src_volume``. If None
+            (default), the positions of the spatial axes in the ``src_volume`` of the ``template`` will be used (this
+            implies that the current instance has at least as many axes as the ``template``). Otherwise, the three given
+            values will define the positions. The order of the given values is ignored, as the mapping order from one
+            coordinate system to the other should be handled exclusively by the transformation matrices and coordinate
+            system definitions.
         deep : bool, optional
             If `True` (default), a copy of the current instance's ``aligned_volume`` Numpy array will be created for the
             new instance; if `False`, the ``*_volume`` arrays of the new instance will be a view into said array
@@ -326,18 +357,22 @@ class Volume:
 
         # Combine, calculate necessary offset, and actually swap current instance's aligned array respectively
         cur_suser_2_tpl_vsrc_3x3 = tpl_vuser_2_tpl_vsrc_3x3 @ cur_suser_2_tpl_suser_3x3
-        offset_4x4 = ac.offset(cur_suser_2_tpl_vsrc_3x3, current_instance.__aligned_volume.shape)
+        offset_4x4 = ac.offset(cur_suser_2_tpl_vsrc_3x3, current_instance.__aligned_volume.shape[:3])
         cur_vuser_2_tpl_vsrc_4x4 = ac.homogeneous_matrix(cur_suser_2_tpl_vsrc_3x3) @ offset_4x4
-        cur_aligned_volume_swapped = ac.swap(current_instance.__aligned_volume, cur_vuser_2_tpl_vsrc_4x4, copy=deep)
+        cur_aligned_volume_swapped = ac.swap(current_instance.__aligned_volume, cur_vuser_2_tpl_vsrc_4x4,
+                                             spatial_dimensions=(0, 1, 2), copy=deep)
+
+        # Move spatial dimensions for the current instances to the defined positions
+        src_spatial_dimensions = (template.__src_spatial_dimensions if src_spatial_dimensions is None
+                                  else src_spatial_dimensions)
+        ac.push_spatial_dimensions(cur_aligned_volume_swapped, src_spatial_dimensions)
 
         # Calculate respective transformation to world coordinates for the swapped aligned array
         swapped_vsrc_2_cur_cuser_4x4 = ac.transformation_for_new_voxel_alignment(current_instance.__vuser2cuser_4x4, np.linalg.inv(cur_vuser_2_tpl_vsrc_4x4))
         swapped_vsrc_2_tpl_csrc_4x4 = ac.transformation_for_new_coordinate_system(swapped_vsrc_2_cur_cuser_4x4, ac.permutation_matrix(src=cur_suser, dst=tpl_ssrc))
 
         return Volume(src_voxel_data=cur_aligned_volume_swapped, src_transformation=swapped_vsrc_2_tpl_csrc_4x4,
-                      src_system=tpl_ssrc, system=tpl_suser, src_object=current_instance.__src_object)
-
-
-
+                      src_system=tpl_ssrc, src_spatial_dimensions=src_spatial_dimensions, system=tpl_suser,
+                      src_object=current_instance.__src_object)
 
     # TODO: Add a print method for nice output

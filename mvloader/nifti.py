@@ -16,12 +16,14 @@ import nibabel
 import numpy as np
 from pathlib import Path
 
+import mvloader.anatomical_coords as ac
 from mvloader.volume import Volume
 
 
-def open_image(path, verbose=True, repair=False):
+def open_image(path, verbose=True, squeeze=False):
     """
-    Open a 3D NIfTI-1 image at the given path.
+    Open a NIfTI-1 image at the given path. The image might have an arbitray number of dimensions; however, its first
+    three axes are assumed to hold its spatial dimensions.
 
     Parameters
     ----------
@@ -29,8 +31,8 @@ def open_image(path, verbose=True, repair=False):
         The path of the file to be loaded.
     verbose : bool, optional
         If `True` (default), print some meta data of the loaded file to standard output.
-    repair : bool, optional
-        If `True`, remove trailing 4th dimension of the image volume if it contains a single entry only (default is
+    squeeze : bool, optional
+        If `True`, remove trailing dimensions of the image volume if they contains a single entry only (default is
         `False`). Note that in this case it has not been tested whether the coordinate transformations from the NIfTI-1
         header still apply.
 
@@ -47,8 +49,7 @@ def open_image(path, verbose=True, repair=False):
     IOError
         If something goes wrong.
     """
-    # According to the NIfTI-1 specification [1]_, the world coordinate system
-    # of NIfTI-1 files is always RAS.
+    # According to the NIfTI-1 specification [1]_, the world coordinate system of NIfTI-1 files is always RAS.
     src_system = "RAS"
     
     try:
@@ -60,7 +61,7 @@ def open_image(path, verbose=True, repair=False):
     hdr = src_object.header
 
     ndim = hdr["dim"][0]
-    if ndim != 3:
+    if ndim < 3:
         raise IOError("Currently only 3D images can be handled. The given image has {} dimension(s).".format(ndim))
     
     if verbose:
@@ -69,18 +70,19 @@ def open_image(path, verbose=True, repair=False):
         print(hdr)
         print("Image dimensions:", voxel_data.ndim)
 
-    # Repair superfluous 4th dimension
-    if repair:
-        voxel_data = __repair_dim(voxel_data, verbose)
+    # Squeeze superfluous dimensions (according to the NIfTI-1 specification [1]_, the spatial dimensions are always
+    # in front)
+    if squeeze:
+        voxel_data = __squeeze_dim(voxel_data, verbose)
 
     mat = hdr.get_best_affine()
 
-    volume = Volume(src_voxel_data=voxel_data, src_transformation=mat, src_system=src_system, system="RAS",
-                    src_object=src_object)
+    volume = Volume(src_voxel_data=voxel_data, src_transformation=mat, src_system=src_system,
+                    src_spatial_dimensions=(0, 1, 2), system="RAS", src_object=src_object)
     return volume
 
 
-def save_image(path, data, transformation):
+def save_image(path, data, transformation, spatial_dimensions=(0, 1, 2)):
     """
     Save the given image data as a NIfTI image file at the given path.
 
@@ -89,11 +91,19 @@ def save_image(path, data, transformation):
     path : str
         The path for the file to be saved.
     data : array_like
-        Three-dimensional array that contains the voxels to be saved.
+        :math:`N`-dimensional array (:math:`N≥3`) that contains the voxels to be saved. The array is assumed to contain
+        a 3D image, i.e. three of its axes (as specified via ``spatial_dimensions``) define its spatial dimensions
+        while the remaining :math:`N-3` axes are its time and/or data dimensions.
     transformation : array_like
         :math:`4×4` transformation matrix that maps from ``data``'s voxel indices to a RAS anatomical world coordinate
         system.
+    spatial_dimensions : sequence of int, optional
+        The three axes that correspond to the spatial dimensions of the ``data`` array (default: (0, 1, 2)). The order
+        of the given values is ignored, as the mapping order from voxel indices to the world coordinate system should be
+        handled exclusively by the given ``transformation`` matrix.
     """
+    spatial_dimensions = sorted(spatial_dimensions)
+    data = ac.pull_spatial_dimensions(data, spatial_dimensions)  # Spatial dimensions must always be in front for NIfTI
     nibabel.Nifti1Image(data, transformation).to_filename(path)
 
 
@@ -109,24 +119,26 @@ def save_volume(path, volume, src_order=True):
         The ``Volume`` instance containing the image data to be saved.
     src_order : bool, optional
         If `True` (default), order the saved voxels as in ``src_volume``; if `False`, order the saved voxels as in
-        ``aligned_volume``. In any case, the correct transformation matrix will be chosen.
+        ``aligned_volume``. In any case, the correct transformation matrix will be chosen. Furthermore, the three
+        spatial dimensions, in accordance with the NIfTI-1 specification [1]_, will always end up in the first three
+        axes of the saved volume.
     """
     system = "RAS"
 
     if src_order:
-        data = volume.src_volume
+        data = ac.pull_spatial_dimensions(volume.src_volume, volume.src_spatial_dimensions)
         transformation = volume.get_src_transformation(system)
     else:
-        data = volume.aligned_volume
+        data = volume.aligned_volume  # Spatial dimensions already in front
         transformation = volume.get_aligned_transformation(system)
 
     save_image(path, data=data, transformation=transformation)
 
 
-def __repair_dim(data, verbose):
+def __squeeze_dim(data, verbose):
     """
-    For 4d arrays with the last dimension containing only one element, return a new 3d array of the same content. For
-    other arrays, simply return them.
+    For arrays with more than three dimensions and the trailing dimensions containing one element only, return a new 3D
+    array of the same content. For other arrays, simply return them.
 
     Parameters
     ----------
@@ -140,11 +152,13 @@ def __repair_dim(data, verbose):
     array_like
         The result from correction.
     """
-    if data.ndim == 4 and data.shape[3] == 1:
-        data = data[..., 0].copy()
+    if data.ndim > 3 and np.all(np.asarray(data.shape[3:]) == 1):
+        squeezed_data = np.squeeze(data, axis=np.arange(3, data.ndim)).copy()
         if verbose:
-            print("4D array has been corrected to 3D.")
-    return data
+            print("{}D array has been corrected to 3D.".format(data.ndim))
+    else:
+        squeezed_data = data
+    return squeezed_data
 
 
 def compress(path, delete_originals=False):
