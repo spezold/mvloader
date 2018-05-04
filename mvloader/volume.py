@@ -12,7 +12,8 @@ import mvloader.anatomical_coords as ac
 
 class Volume:
     """
-    Volume(src_voxel_data, src_transformation, src_system, system="RAS", src_object=None)
+    Volume(src_voxel_data, src_transformation, src_system,
+           src_spatial_dimensions=(0, 1, 2), system="RAS", src_object=None)
 
     Return an object that represents 3D image volumes in a desired anatomical world coordinate system (``system``;
     default is "RAS"), based on (1) an array that holds the voxels (``src_voxel_data``) and (2) a transformation matrix
@@ -52,7 +53,8 @@ class Volume:
         ``src_voxel_data`` and ``src_transformation`` -- for debugging, for example (default: None).
     """
 
-    def __init__(self, src_voxel_data, src_transformation, src_system, src_spatial_dimensions=(0, 1, 2), system="RAS", src_object=None):
+    def __init__(self, src_voxel_data, src_transformation, src_system,
+                 src_spatial_dimensions=(0, 1, 2), system="RAS", src_object=None):
 
         self.__src_system = src_system
         self.__user_system = None
