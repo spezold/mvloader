@@ -40,7 +40,7 @@ class Volume:
         ``src_transformation`` matrix. Any permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used. For
         example, for voxels and a transformation matrix provided by a DICOM loading library, this should usually be
         "LPS", as this is the assumed world coordinate system of the DICOM standard.
-    src_spatial_dimensions : array_like, optional
+    src_spatial_dimensions : sequence of int, optional
         The three spatial dimensions of the array (default: (0, 1, 2)). The order of the given values is ignored, as
         the mapping order from voxel indices to the world coordinate system should be handled exclusively by the given
         ``src_transformation`` matrix.
