@@ -193,13 +193,19 @@ Each `Volume` instance provides two representations of the image
 volume's voxel data as three-dimensional NumPy arrays:
 
 * `src_volume` provides the voxels in the same order as they have been
-  returned by the underlying image library.
+  returned by the underlying image library. Specifically, if temporal
+  and/or multiple data dimensions (i.e. vector data) are present, the
+  spatial dimensions will also remain along the same axes in which they
+  have been returned by the underlying image library.
 * `aligned_volume` provides the voxels with their axes aligned as
   closely as possible to the anatomical world coordinate system that
-  has been chosen by the user. For example, if the user chooses an
+  has been chosen by the user. If temporal and/or multiple data
+  dimensions (i.e. vector data) are present, the spatial dimensions are
+  brought to the front, the others brought to the back, with the latter
+  keeping their original order. For example, if the user chooses an
   "LPS" anatomical world coordinate system (meaning that the first
-  coordinate axis will point to the patient's left side, the second
-  axis will point to their back, and the third will point towards their
+  coordinate axis will point to the patient's left side, the second axis
+  will point to their back, and the third will point towards their
   head), then `aligned_volume[1, 0, 0]` will lie to the left of
   `aligned_volume[0, 0, 0]`, `aligned_volume[0, 1, 0]` will lie closer
   to the patient's back, and `aligned_volume[0, 0, 1]` will lie closer
@@ -395,8 +401,8 @@ Loading Images
 ### Loading and stacking DICOM images
 
 Loading DICOM files requires the `pydicom` package. Currently, loading
-multiple files with 2D slices that together form a 3D volume is
-supported.
+multiple files with 2D slices that together form a 3D volume holding
+scalar data is supported.
 
 To load DICOM files in the folder `/foo` and stack them into a `Volume`
 instance, call:
@@ -424,8 +430,9 @@ For more options, see the documentation of the `mvloader.dicom` module.
 
 ### Loading NIfTI images
 
-Loading NIfTI files requires the `nibabel` package. Currently, loading
-3D volumes (both `.nii` and `.nii.gz`) is supported.
+Loading NIfTI files requires the `nibabel` package. Loading 3D volumes
+(both `.nii` and `.nii.gz`) with an arbitrary number of dimensions (i.e.
+scalar data, vector data, temporal data) is supported.
 
 To load the file `/foo/bar.nii` into a `Volume` instance, call:
 ```python
@@ -511,6 +518,10 @@ functions.
 
 History
 -------
+
+### (2018-05-04)
+
+Support for temporal dimension and vector data in NIfTI images.
 
 ### (2018-03-22)
 
