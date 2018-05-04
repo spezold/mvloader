@@ -82,6 +82,9 @@ def save_image(path, data, transformation, system="RAS", kinds=None):
         or "space".
 
     """
+    if data.ndim > 3:
+        raise RuntimeError("Currently, mvloader supports saving NRRD files with scalar data only!")
+
     # Create the header entries from the transformation
     space = system.upper()
     space_directions = transformation[:3, :3].T.tolist()
@@ -117,6 +120,9 @@ def save_volume(path, volume, src_order=True, src_system=True, kinds=None):
         nothing is given (default), the "kinds" field will not be set. Note that all strings should either be "domain"
         or "space".
     """
+    if volume.aligned_volume.ndim > 3:
+        raise RuntimeError("Currently, mvloader supports saving NRRD files with scalar data only!")
+
     system = volume.src_system if src_system else volume.system
     system = system if system in ["RAS", "LAS", "LPS"] else "RAS"
 
