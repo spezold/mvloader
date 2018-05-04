@@ -27,8 +27,10 @@ class Volume:
     Parameters
     ----------
     src_voxel_data : array_like
-        A three-dimensional array that contains the image voxels, arranged to match the coordinate transformation
-        matrix ``src_transformation``.
+        An :math:`N`-dimensional array (:math:`N≥3`) that contains the image voxels, arranged to match the coordinate
+        transformation matrix ``src_transformation``. The array is assumed to contain a 3D image, i.e. three of its
+        dimensions (as specified via ``src_spatial_dimensions``) define its spatial dimensions while the remaining
+        :math:`N-3` dimensions are its time and/or data dimensions. If :math:`N=3`, scalar data is assumed.
     src_transformation : array_like
         A :math:`4×4` matrix that describes the mapping from voxel indices in ``src_voxel_data`` to the given anatomical
         world coordinate system ``src_system``.
@@ -37,6 +39,10 @@ class Volume:
         ``src_transformation`` matrix. Any permutation of {A,P}, {I,S}, {L,R} (case-insensitive) can be used. For
         example, for voxels and a transformation matrix provided by a DICOM loading library, this should usually be
         "LPS", as this is the assumed world coordinate system of the DICOM standard.
+    src_spatial_dimensions : array_like, optional
+        The three spatial dimensions of the array (default: (0, 1, 2)). The order of the given values is ignored, as
+        the mapping order from voxel indices to the world coordinate system should be handled exclusively by the given
+        ``src_transformation`` matrix.
     system : str, optional
         A three-character string similar to ``src_system``. However, ``system`` should describe the anatomical world
         coordinate system that the *user* assumes/desires. It will also determine the arrangement of the voxel data for
@@ -46,7 +52,7 @@ class Volume:
         ``src_voxel_data`` and ``src_transformation`` -- for debugging, for example (default: None).
     """
 
-    def __init__(self, src_voxel_data, src_transformation, src_system, system="RAS", src_object=None):
+    def __init__(self, src_voxel_data, src_transformation, src_system, src_spatial_dimensions=(0, 1, 2), system="RAS", src_object=None):
 
         self.__src_system = src_system
         self.__user_system = None
@@ -60,6 +66,8 @@ class Volume:
         self.__src_volume = src_voxel_data  # The source voxel data
         self.__vsrc2cuser_4x4 = None
         # ^ Mapping from ``src_volume``'s voxel indices to the desired anatomical coordinate system
+        self.__src_spatial_dimensions = tuple(sorted(src_spatial_dimensions))  # Remaining dimensions are time or data
+        self.__src_spatial_shape = tuple(self.__src_volume.shape[i] for i in self.__src_spatial_dimensions)
 
         self.__aligned_spacing = None
         self.__aligned_volume = None
@@ -107,7 +115,7 @@ class Volume:
         # Swap: given source array axes -> user system axes
         vsrc2suser_3x3 = ssrc2suser_3x3 @ vsrc2ssrc_3x3
 
-        offset_4x4 = ac.offset(vsrc2suser_3x3, self.__src_volume.shape[:3])
+        offset_4x4 = ac.offset(vsrc2suser_3x3, self.__src_spatial_shape)
         # Transform: given source array indices -> user system aligned array indices
         vsrc2vuser_4x4 = ac.homogeneous_matrix(vsrc2suser_3x3) @ offset_4x4
         # Transform: user system aligned array indices -> given source array indices
@@ -189,7 +197,7 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The 3-dimensional Numpy array that contains the original voxel data.
+            The :math:`N`-dimensional Numpy array (:math:`N≥3`) that contains the original voxel data.
         """
         return self.__src_volume
 
@@ -199,8 +207,10 @@ class Volume:
         Returns
         -------
         numpy.ndarray
-            The 3-dimensional Numpy array that contains the image information with the voxel data axes aligned to the
-            desired anatomical world coordinate system ``system`` as closely as is possible without reinterpolation.
+            The :math:`N`-dimensional Numpy array (:math:`N≥3`) that contains the image information with the voxel data
+            axes aligned to the desired anatomical world coordinate system ``system`` as closely as is possible without
+            reinterpolation. The three spatial dimensions are brought to the front, the remaining dimensions
+            (time and/or data dimensions) are brought to the back, keeping their original order.
             This means, for example, if ``system`` is "RAS", then ``aligned_volume`` will hold an array where
             increasing the index on axis 0 will reach a voxel coordinate that is typically more to the right side of
             the imaged subject, increasing the index on axis 1 will reach a voxel coordinate that is more anterior,
