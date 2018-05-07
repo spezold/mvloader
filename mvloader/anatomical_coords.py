@@ -240,7 +240,6 @@ def swap(a, perm, spatial_dimensions, copy=False):
     """
     a = a.copy() if copy else a
 
-    spatial_dimensions = sorted(spatial_dimensions)
     ndim = len(spatial_dimensions)
     perm = perm[:ndim, :ndim]
     validate_permutation_matrix(perm)

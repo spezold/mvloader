@@ -102,7 +102,6 @@ def save_image(path, data, transformation, spatial_dimensions=(0, 1, 2)):
         of the given values is ignored, as the mapping order from voxel indices to the world coordinate system should be
         handled exclusively by the given ``transformation`` matrix.
     """
-    spatial_dimensions = sorted(spatial_dimensions)
     data = ac.pull_spatial_dimensions(data, spatial_dimensions)  # Spatial dimensions must always be in front for NIfTI
     nibabel.Nifti1Image(data, transformation).to_filename(path)
 
