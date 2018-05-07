@@ -165,8 +165,9 @@ def pull_spatial_dimensions(a, spatial_dimensions, sort=True, copy=False):
         A :math:`d`-tuple that gives the positions of the array's spatial dimensions. See ``sort`` for the meaning of
         the values' order.
     sort : bool, optional
-        If `True` (default), the smallest value will end up as axis 0, the second smallest one as axis 1, etc. If
-        `False`, the first value will end up as axis 0, the second one as axis 1, etc.
+        Specify sorting of the spatial dimensions for pulling. If `True` (default), the smallest value of
+        ``spatial_dimensions`` will end up as axis 0, the second smallest one as axis 1, etc. If `False`, the first
+        value will end up as axis 0, the second one as axis 1, etc.
     copy : bool, optional
         If `False` (default), return a view into the given array `a`; if `True`, return an array that does not share
         data with `a`.
@@ -195,8 +196,9 @@ def push_spatial_dimensions(a, spatial_dimensions, sort=True, copy=False):
         A :math:`d`-tuple that gives the original positions of the array's spatial dimensions. See ``sort`` for the
         meaning of the values' order.
     sort : bool, optional
-        If `True` (default), axis 0 will end up at the smallest value, axis 1 will end up at the second smallest value,
-        etc. If `False`, axis 0 will end up at the first value, axis 1 will end up at the second value, etc.
+        Specify sorting of the spatial dimensions for pushing. If `True` (default), axis 0 will end up at the smallest
+        value of ``spatial_dimensions``, axis 1 will end up at the second smallest value, etc. If `False`, axis 0 will
+        end up at the first value, axis 1 will end up at the second value, etc.
     copy : bool, optional
         If `False` (default), return a view into the given array `a`; if `True`, return an array that does not share
         data with `a`.
