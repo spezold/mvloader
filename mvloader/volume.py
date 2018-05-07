@@ -364,7 +364,7 @@ class Volume:
 
         # Move spatial dimensions for the current instances to the defined positions
         src_spatial_dimensions = (template.__src_spatial_dimensions if src_spatial_dimensions is None
-                                  else src_spatial_dimensions)
+                                  else sorted(src_spatial_dimensions))
         ac.push_spatial_dimensions(cur_aligned_volume_swapped, src_spatial_dimensions)
 
         # Calculate respective transformation to world coordinates for the swapped aligned array
