@@ -153,7 +153,7 @@ def offset(perm, shape):
     return offset_matrix
 
 
-def pull_spatial_dimensions(a, spatial_dimensions, copy=False):
+def pull_spatial_dimensions(a, spatial_dimensions, sort=True, copy=False):
     """
     Bring the given array's :math:`d` spatial dimensions to the front.
 
@@ -162,8 +162,11 @@ def pull_spatial_dimensions(a, spatial_dimensions, copy=False):
     a : array_like
         The :math:`N`-dimensional array (:math:`N≥d`) whose spatial dimensions are to be pulled.
     spatial_dimensions : sequence of int
-        A :math:`d`-tuple that gives the positions of the array's spatial dimensions. The first value will end up as
-        axis 0, the second one as axis 1, etc.
+        A :math:`d`-tuple that gives the positions of the array's spatial dimensions. See ``sort`` for the meaning of
+        the values' order.
+    sort : bool, optional
+        If `True` (default), the smallest value will end up as axis 0, the second smallest one as axis 1, etc. If
+        `False`, the first value will end up as axis 0, the second one as axis 1, etc.
     copy : bool, optional
         If `False` (default), return a view into the given array `a`; if `True`, return an array that does not share
         data with `a`.
@@ -175,11 +178,12 @@ def pull_spatial_dimensions(a, spatial_dimensions, copy=False):
         remaining axes is unchanged.
     """
     a = a.copy() if copy else a
+    spatial_dimensions = sorted(spatial_dimensions) if sort else spatial_dimensions
     a = np.moveaxis(a, source=spatial_dimensions, destination=np.arange(len(spatial_dimensions)))
     return a
 
 
-def push_spatial_dimensions(a, spatial_dimensions, copy=False):
+def push_spatial_dimensions(a, spatial_dimensions, sort=True, copy=False):
     """
     Bring the given array's :math:`d` spatial dimensions from the front back to their original position.
 
@@ -188,8 +192,11 @@ def push_spatial_dimensions(a, spatial_dimensions, copy=False):
     a : array_like
         The :math:`N`-dimensional array (:math:`N≥d`) whose spatial dimensions are to be pushed back.
     spatial_dimensions : sequence of int
-        A :math:`d`-tuple that gives the original positions of the array's spatial dimensions. Axis 0 will end up at the
-        first value, axis 1 will end up at the second value, etc.
+        A :math:`d`-tuple that gives the original positions of the array's spatial dimensions. See ``sort`` for the
+        meaning of the values' order.
+    sort : bool, optional
+        If `True` (default), axis 0 will end up at the smallest value, axis 1 will end up at the second smallest value,
+        etc. If `False`, axis 0 will end up at the first value, axis 1 will end up at the second value, etc.
     copy : bool, optional
         If `False` (default), return a view into the given array `a`; if `True`, return an array that does not share
         data with `a`.
@@ -201,6 +208,7 @@ def push_spatial_dimensions(a, spatial_dimensions, copy=False):
         remaining axes is unchanged.
     """
     a = a.copy() if copy else a
+    spatial_dimensions = sorted(spatial_dimensions) if sort else spatial_dimensions
     a = np.moveaxis(a, source=np.arange(len(spatial_dimensions)), destination=spatial_dimensions)
     return a
 
