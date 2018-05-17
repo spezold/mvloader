@@ -34,7 +34,7 @@ def open_stack(path, verbose=True, sloppy=False):
 
     The given files need *not* be named according to their stacking order -- in fact, their names do not influence
     the stacking process. Instead, "Image Position (Patient)" (0020,0032) and "Image Orientation (Patient)" (0020,0037)
-    are evaluated for working out the stacking order. See e.g. [1]_ and [2]_ for the necessary steps.
+    are evaluated for working out the stacking order. See e.g. [2]_ and [3]_ for the necessary steps.
 
     Parameters
     ----------
@@ -60,8 +60,8 @@ def open_stack(path, verbose=True, sloppy=False):
 
     References
     ----------
-    .. [1] http://nipy.org/nibabel/dicom/dicom_orientation.html (20180209)
-    .. [2] https://itk.org/pipermail/insight-users/2003-September/004761.html (20180209)
+    .. [2] http://nipy.org/nibabel/dicom/dicom_orientation.html (20180209)
+    .. [3] https://itk.org/pipermail/insight-users/2003-September/004761.html (20180209)
     """
     volume = SliceStacker(path, sloppy=sloppy).execute().volume
     if verbose:
@@ -190,7 +190,7 @@ class SliceStacker:
         # Use the tags of an arbitrary slice for setting most of the transformation matrix values
         slice_ref = slices[0]
         
-        # Create the transformation matrix, "NiBabel-style" [1]_, assuming `(r, c, s)` indices, where `(r, c)` gives row
+        # Create the transformation matrix, "NiBabel-style" [2]_, assuming `(r, c, s)` indices, where `(r, c)` gives row
         # and column index of the individual slices and `s` is the slice index
         mat = np.eye(4)
         # Get the directional cosines via "Image Orientation (Patient)" and flip them to have `(r, c)` indices rather
@@ -209,7 +209,7 @@ class SliceStacker:
         c = c @ np.diag(spc_ref)
         mat[:3, :2] = c
         # Sort the slices along the determined stacking direction: Calculate the dot product of their "Image Position
-        # (Patient)" value with the direction vector to get the position w.r.t. said direction (see [2]_)
+        # (Patient)" value with the direction vector to get the position w.r.t. said direction (see [3]_)
         order = lambda s: s[SliceStacker.POS_TAG].value @ stack_dir
         slices = self.sorted_slices = sorted(slices, key=order)
         # Get the offset via "Image Position (Patient)" of the (sorted) first slice. No need to flip here as only
@@ -217,7 +217,7 @@ class SliceStacker:
         pos_0 = np.asarray(slices[0][SliceStacker.POS_TAG].value)
         mat[:3, 3] = pos_0
         # Calculate the "s part" of the transformation matrix (i.e. flipping and scaling for the slice index,
-        # see [1]_). The matrix is complete afterwards
+        # see [2]_). The matrix is complete afterwards
         pos_end = np.asarray(slices[-1][SliceStacker.POS_TAG].value)
         s = (pos_end - pos_0) / (n - 1)
         mat[:3, 2] = s
