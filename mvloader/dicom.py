@@ -83,6 +83,34 @@ def open_stack(path, verbose=True, sloppy=False):
     return volume
 
 
+def is_dicom_file(path, verbose=False):
+    """
+    Check if the given file is a DICOM file or not.
+
+    The check is performed by trying to read the file via ``pydicom.read_file(path, stop_before_pixels=True)``. Not
+    failing here is assumed that the given path indeed leads to a valid DICOM file.
+
+    Parameters
+    ----------
+    path : str
+        The path to the file to be checked.
+    verbose : bool, optional
+        If `True`, print an error message if the file cannot be loaded (default: `False`).
+
+    Returns
+    -------
+    bool
+        `True` if the file indeed appears as a valid DICOM file; `False` otherwise.
+    """
+    try:
+        dataset = pydicom.read_file(str(Path(path).resolve()), stop_before_pixels=True)
+        result = True
+    except Exception as ex:
+        if verbose:
+            print("'{}' appears not to be a DICOM file\n({})".format(path, ex))
+        result = False
+    return result
+
 class SliceStacker:
     """
     SliceStacker(self, path, si_uid=None, sloppy=False, recursive=False)
@@ -147,7 +175,7 @@ class SliceStacker:
             for f in sorted(path.glob("**/*" if self.recursive else "*"), key=lambda p: str(p).lower()):
                 try:
                     # Find the first DICOM file, determine its "Series Instance UID"
-                    dataset = pydicom.read_file(str(f.resolve()), stop_before_pixels=True)
+                    dataset = pydicom.read_file(str(f.resolve()), stop_before_pixels=True)  # FIXME:
                     self.si_uid = dataset[SliceStacker.SI_UID_TAG].value
                     break
                 except:
@@ -254,3 +282,4 @@ class SliceStacker:
         self.__sort_slices()
         
         return self
+
