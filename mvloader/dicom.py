@@ -73,7 +73,8 @@ def open_stack(path, verbose=True, sloppy=False):
     .. [2] http://nipy.org/nibabel/dicom/dicom_orientation.html (20180209)
     .. [3] https://itk.org/pipermail/insight-users/2003-September/004761.html (20180209)
     """
-    volume = SliceStacker(path, sloppy=sloppy).execute().volume
+    # FIXME: add archive case
+    volume = SliceStacker(path, sloppy=sloppy, recursive=False).execute().volume
     if verbose:
         print("Stack loaded:", path)
         print("Meta data (first slice):")
@@ -84,7 +85,7 @@ def open_stack(path, verbose=True, sloppy=False):
 
 class SliceStacker:
     """
-    SliceStacker(self, path, si_uid=None, sloppy=False)
+    SliceStacker(self, path, si_uid=None, sloppy=False, recursive=False)
 
     Encapsulate the slice stacking functionality.
 
@@ -109,12 +110,13 @@ class SliceStacker:
     ROWS_TAG   = (0x0028, 0x0010)  # Rows
     COLS_TAG   = (0x0028, 0x0011)  # Columns
     
-    def __init__(self, path, si_uid=None, sloppy=False):
+    def __init__(self, path, si_uid=None, sloppy=False, recursive=False):
 
         path = Path(path)
         self.base_dir = None  # Directory containing the current slices (absolute path)
         self.si_uid = None  # The slices' common Series Instance UID (0020,000E) or None
         self.sloppy = sloppy
+        self.recursive = recursive
         
         self.slices = {}
         # ^ A dictionary of all slices (sharing the determined Series Instance UID, if desired). The respective file
@@ -142,7 +144,7 @@ class SliceStacker:
         path = path.resolve()
         if path.is_dir():
             self.base_dir = str(path)
-            for f in sorted(path.iterdir(), key=lambda p: str(p).lower()):
+            for f in sorted(path.glob("**/*" if self.recursive else "*"), key=lambda p: str(p).lower()):
                 try:
                     # Find the first DICOM file, determine its "Series Instance UID"
                     dataset = pydicom.read_file(str(f.resolve()), stop_before_pixels=True)
@@ -166,7 +168,7 @@ class SliceStacker:
         Collect the slices from the ``base_dir`` sharing the ``si_uid``. Fill ``slices`` accordingly.
         """
         path = Path(self.base_dir).resolve()
-        for f in path.iterdir():
+        for f in path.glob("**/*" if self.recursive else "*"):
             try:
                 dataset = pydicom.read_file(str(f.resolve()))
                 if not self.sloppy:
