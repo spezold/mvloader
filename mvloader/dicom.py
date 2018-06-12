@@ -180,6 +180,9 @@ class SliceStacker:
         If `False` (default), ``si_uid`` (or the respective inferred "Series Instance UID" -- see ``si_uid``) will be
         compared to find matching slices and ignore others that are in the same directory; if `True`, this comparison
         will not be made and thus files with different "Series Instance UID"s will potentially be stacked.
+    recursive : bool, optional
+        If `False` (default), only search the current directory itself (see ``path``) for DICOM files; if `True`, also
+        search its subdirectories.
     """
     SI_UID_TAG = (0x0020, 0x000E)  # Series Instance UID
     ORIENT_TAG = (0x0020, 0x0037)  # Image Orientation (Patient)
