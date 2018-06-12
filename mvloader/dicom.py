@@ -11,12 +11,16 @@ References
 """
 
 
+from contextlib import contextmanager
 try:
     import pydicom  # pydicom >= 1.0
 except ImportError:
     import dicom as pydicom  # pydicom < 1.0
 import numpy as np
 from pathlib import Path
+import tarfile
+import tempfile
+import zipfile
 
 from mvloader.volume import Volume
 
@@ -26,8 +30,8 @@ def open_stack(path, verbose=True, sloppy=False):
     Open a list of two-dimensional DICOM files at the specified path and build their three-dimensional volume
     representation.
 
-    The given ``path`` may point to either of the following three cases: (1) a directory, (2) an archive file containing
-    DICOM files, (3) a DICOM file.
+    The given ``path`` may point to either of the following three cases: (1) a directory, (2) an archive file (zip,
+    tar.gz, or tar.bz2) file containing DICOM files , (3) a DICOM file.
 
     Case 1 (``path`` points to a directory)
         Iterate over its contents (*non-recursively*) in alphanumeric order and try to combine all present DICOM files
@@ -35,7 +39,8 @@ def open_stack(path, verbose=True, sloppy=False):
 
     Case 2 (``path`` points to an archive file)
         Temporarily extract it, then iterate over its contents (*recursively*) in alphanumeric order and try to combine
-        all present DICOM files that share the "Series Instance UID" (0020,000E) with the first loadable DICOM file.
+        all present DICOM files that share the "Series Instance UID" (0020,000E) with the first loadable DICOM file. The
+        file format is determined via trial and error, so this might not be the most efficient way.
 
     Case 3 (``path`` points to a DICOM file)
         Iterate over the contents of the file's base directory (*non-recursively*) and try to combine all present DICOM
@@ -73,14 +78,58 @@ def open_stack(path, verbose=True, sloppy=False):
     .. [2] http://nipy.org/nibabel/dicom/dicom_orientation.html (20180209)
     .. [3] https://itk.org/pipermail/insight-users/2003-September/004761.html (20180209)
     """
-    # FIXME: add archive case
-    volume = SliceStacker(path, sloppy=sloppy, recursive=False).execute().volume
+    if Path(path).resolve().is_file() and not is_dicom_file(path):
+        # Handle case 2 (archive file)
+        with extract_archive(path) as tmp_path:
+            volume = SliceStacker(tmp_path, sloppy=sloppy, recursive=True).execute().volume
+    else:
+        # Handle case 1 and 3
+        volume = SliceStacker(path, sloppy=sloppy, recursive=False).execute().volume
     if verbose:
         print("Stack loaded:", path)
         print("Meta data (first slice):")
         print(volume.src_object.sorted_slices[0])  # Will show the first slice's header
 
     return volume
+
+
+@contextmanager
+def extract_archive(path):
+    """
+    Extract an archive (zip, tar.gz, or tar.bz2) to a temporary path, clean up afterward. Intended to be used with
+    ``with`` statement.
+
+    Parameters
+    ----------
+    path : str
+        The path to the archive to be extracted.
+
+    Yields
+    ------
+    str
+        The path to the temporary folder where the archive was extracted.
+
+    Raises
+    ------
+    IOError
+        If the given archive could not be extracted.
+    """
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        # Extract archive (inspired by [*]_)
+        #
+        # .. [*] http://code.activestate.com/recipes/576714-extract-a-compressed-file/ (20180612)
+        successfully_extracted = False
+        for opener, mode in [(zipfile.ZipFile, "r"), (tarfile.open, "r:gz"), (tarfile.open, "r:bz2")]:
+            try:
+                with opener(path, mode) as file:
+                    file.extractall(path=tmpdirname)
+                    successfully_extracted = True
+                    break
+            except:
+                pass
+        if not successfully_extracted:
+            raise IOError("The file '{}' could not be extracted! Is it an archive file?".format(path))
+        yield tmpdirname
 
 
 def is_dicom_file(path, verbose=False):
@@ -103,13 +152,14 @@ def is_dicom_file(path, verbose=False):
         `True` if the file indeed appears as a valid DICOM file; `False` otherwise.
     """
     try:
-        dataset = pydicom.read_file(str(Path(path).resolve()), stop_before_pixels=True)
+        pydicom.read_file(str(Path(path).resolve()), stop_before_pixels=True)
         result = True
     except Exception as ex:
         if verbose:
             print("'{}' appears not to be a DICOM file\n({})".format(path, ex))
         result = False
     return result
+
 
 class SliceStacker:
     """
@@ -173,13 +223,10 @@ class SliceStacker:
         if path.is_dir():
             self.base_dir = str(path)
             for f in sorted(path.glob("**/*" if self.recursive else "*"), key=lambda p: str(p).lower()):
-                try:
-                    # Find the first DICOM file, determine its "Series Instance UID"
-                    dataset = pydicom.read_file(str(f.resolve()), stop_before_pixels=True)  # FIXME:
-                    self.si_uid = dataset[SliceStacker.SI_UID_TAG].value
+                file_path = str(f.resolve())
+                if is_dicom_file(file_path):
+                    self.si_uid = pydicom.read_file(file_path, stop_before_pixels=True)[SliceStacker.SI_UID_TAG].value
                     break
-                except:
-                    pass
         else:
             self.base_dir = str(path.parent)
             try:
@@ -282,4 +329,3 @@ class SliceStacker:
         self.__sort_slices()
         
         return self
-
