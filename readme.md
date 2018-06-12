@@ -420,7 +420,16 @@ volume = dicom.open_stack("/foo/bar.dcm")
 In this case, all files in the folder `/foo` that share their *Series
 Instance UID* with `bar.dcm` will be stacked.
 
-In both cases, stacking will *not* take the loaded file names into
+As a third option, we can specify an archive, e.g. `/foo/bar.tbz`:
+```python
+volume = dicom.open_stack("/foo/bar.tbz")
+```
+In this case, the alphanumerically first loadable DICOM file and all
+files with the same *Series Instance UID* (0020,000E) from the archive
+`bar.tbz` will be stacked.
+
+
+In any case, stacking will *not* take the loaded file names into
 account but use the files' position and orientation information (*Image
 Position (Patient)* (0020,0032) and *Image Orientation (Patient)*
 (0020,0037)) to determine their stacking order – which is, in fact, the
@@ -518,6 +527,12 @@ functions.
 
 History
 -------
+
+### (2018-06-12)
+
+Support for DICOM stacks that are packed in archives (*zip*, *tar.gz*,
+or *tar.bz2*).
+
 
 ### (2018-05-04)
 
