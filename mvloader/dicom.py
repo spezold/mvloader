@@ -26,11 +26,21 @@ def open_stack(path, verbose=True, sloppy=False):
     Open a list of two-dimensional DICOM files at the specified path and build their three-dimensional volume
     representation.
 
-    If ``path`` is a directory path, iterate over its contents in alphanumeric order and try to combine all present
-    DICOM files that share the "Series Instance UID" (0020,000E) with the first loadable DICOM file. If it is a file
-    path, iterate over the contents of the file's base directory and try to combine all present DICOM files that
-    share the "Series Instance UID" with the given file. If ``sloppy`` is `True`, ignore the "Series Instance UID" in
-    both cases and try to combine all of the directory's DICOM files.
+    The given ``path`` may point to either of the following three cases: (1) a directory, (2) an archive file containing
+    DICOM files, (3) a DICOM file.
+
+    Case 1 (``path`` points to a directory)
+        Iterate over its contents (*non-recursively*) in alphanumeric order and try to combine all present DICOM files
+        that share the "Series Instance UID" (0020,000E) with the first loadable DICOM file.
+
+    Case 2 (``path`` points to an archive file)
+        Temporarily extract it, then iterate over its contents (*recursively*) in alphanumeric order and try to combine
+        all present DICOM files that share the "Series Instance UID" (0020,000E) with the first loadable DICOM file.
+
+    Case 3 (``path`` points to a DICOM file)
+        Iterate over the contents of the file's base directory (*non-recursively*) and try to combine all present DICOM
+        files that share the "Series Instance UID" with the given file. If ``sloppy`` is `True`, ignore the "Series
+        Instance UID" in both cases and try to combine all of the directory's DICOM files.
 
     The given files need *not* be named according to their stacking order -- in fact, their names do not influence
     the stacking process. Instead, "Image Position (Patient)" (0020,0032) and "Image Orientation (Patient)" (0020,0037)
@@ -39,7 +49,7 @@ def open_stack(path, verbose=True, sloppy=False):
     Parameters
     ----------
     path : str
-        The path that determines the files to be loaded (either a directory path or file path).
+        The path that determines the files to be loaded (either a directory path or file path; see possibilities above).
     verbose : bool, optional
         If `True` (default), print some meta data of the loaded files to standard output.
     sloppy : bool, optional
