@@ -136,8 +136,8 @@ def is_dicom_file(path, verbose=False):
     """
     Check if the given file is a DICOM file or not.
 
-    The check is performed by trying to read the file via ``pydicom.read_file(path, stop_before_pixels=True)``. Not
-    failing here is assumed that the given path indeed leads to a valid DICOM file.
+    The check is performed by trying to read the file via ``pydicom.read_file(path, stop_before_pixels=True)``. It is
+    assumed that not failing here means the given path indeed leads to a valid DICOM file.
 
     Parameters
     ----------
