@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name="mvloader",
-    version="0.2.201806121909",
+    version="0.2.201806131828",
     description="load medical image volumes (3D)",
     long_description="See readme.md in the project folder or on the github page.",
     author="Simon Pezold",

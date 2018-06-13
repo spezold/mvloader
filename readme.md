@@ -528,6 +528,16 @@ functions.
 History
 -------
 
+### (2018-06-13)
+
+Rename `Volume.src_volume` to `Volume.src_data` and
+`Volume.aligned_volume` to `Volume.aligned_data`, to make it clear that
+these properties do not return another `Volume` instance but the actual
+voxel data.
+
+Aliases with the old names are provided for backward
+compatibility. These may be removed some time in the future.
+
 ### (2018-06-12)
 
 Support for DICOM stacks that are packed in archives (*zip*, *tar.gz*,
