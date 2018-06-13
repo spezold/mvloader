@@ -180,7 +180,7 @@ particular
 1. the user may choose each `Volume`'s anatomical world coordinate
    system independent of the underlying file format's world coordinate
    system, and
-2. ``Volume`` provides a voxel representation (called `aligned_volume`)
+2. ``Volume`` provides a voxel representation (called `aligned_data`)
    with the voxel axes aligned as closely as possible to the user's
    choice of anatomical world coordinate system. This representation
    simplifies visualizing volumes in *almost* correct anatomical
@@ -192,12 +192,12 @@ particular
 Each `Volume` instance provides two representations of the image
 volume's voxel data as three-dimensional NumPy arrays:
 
-* `src_volume` provides the voxels in the same order as they have been
+* `src_data` provides the voxels in the same order as they have been
   returned by the underlying image library. Specifically, if temporal
   and/or multiple data dimensions (i.e. vector data) are present, the
   spatial dimensions will also remain along the same axes in which they
   have been returned by the underlying image library.
-* `aligned_volume` provides the voxels with their axes aligned as
+* `aligned_data` provides the voxels with their axes aligned as
   closely as possible to the anatomical world coordinate system that
   has been chosen by the user. If temporal and/or multiple data
   dimensions (i.e. vector data) are present, the spatial dimensions are
@@ -206,9 +206,9 @@ volume's voxel data as three-dimensional NumPy arrays:
   "LPS" anatomical world coordinate system (meaning that the first
   coordinate axis will point to the patient's left side, the second axis
   will point to their back, and the third will point towards their
-  head), then `aligned_volume[1, 0, 0]` will lie to the left of
-  `aligned_volume[0, 0, 0]`, `aligned_volume[0, 1, 0]` will lie closer
-  to the patient's back, and `aligned_volume[0, 0, 1]` will lie closer
+  head), then `aligned_data[1, 0, 0]` will lie to the left of
+  `aligned_data[0, 0, 0]`, `aligned_data[0, 1, 0]` will lie closer
+  to the patient's back, and `aligned_data[0, 0, 1]` will lie closer
   to their head.
 
 ### Transformation matrix representations
@@ -216,17 +216,17 @@ volume's voxel data as three-dimensional NumPy arrays:
 Each `Volume` instance provides three 4×4 transformation matrices to map
 from voxel indices to anatomical world coordinates:
 
-* `src_transformation` maps from `src_volume`'s voxel indices to the
+* `src_transformation` maps from `src_data`'s voxel indices to the
   world coordinate system that has been assumed by the underlying image
   format (which is provided via `Volume`'s `src_system` property).
-* `aligned_transformation` maps from `aligned_volume`'s voxel indices
+* `aligned_transformation` maps from `aligned_data`'s voxel indices
   to the world coordinate system that has been chosen by the user
   (which is provided via `Volume`'s `system` property).
-* `src_to_aligned_transformation` maps from `src_volume`'s voxel
+* `src_to_aligned_transformation` maps from `src_data`'s voxel
   indices to the world coordinate system that has been chosen by the
   user (namely `system`).
 
-Apart from that, the mappings from `src_volume` and `aligned_volume` to
+Apart from that, the mappings from `src_data` and `aligned_data` to
 arbitrary anatomical world coordinate systems can be determined via
 `Volume`'s methods `get_src_transformation()` and
 `get_aligned_transformation()`.
@@ -242,7 +242,7 @@ volume.system = "IAR"  # 1st axis: inferior, 2nd: anterior, 3rd: right
 ```
 are possible here. Technically, all permutations of {A,P}, {I,S}, {L,R}
 may be provided to `system` as a (case-insensitive) three-character
-string. Any update of `system` will update the `aligned_volume` voxel
+string. Any update of `system` will update the `aligned_data` voxel
 data, the respective voxel size information, and the transformation
 matrices accordingly.
 
@@ -300,11 +300,11 @@ print(volume.src_volume[voxel_index_of_world_origin])
 
 Now, as we seem to prefer working with RAS rather than LPS coordinates
 (remember that we *chose* `system=our_world` with `our_world="RAS"`
-above), things are different with `aligned_volume`, which is the voxel data
+above), things are different with `aligned_data`, which is the voxel data
 representation whose axes are more or less aligned with our chosen world
 coordinate system's axes: the world coordinate system's origin does
-*not* lie at `aligned_volume`'s voxel index `[0, 0, 0]`. Indeed, as
-`aligned_volume`'s voxel indices along axis 0 should increase when
+*not* lie at `aligned_data`'s voxel index `[0, 0, 0]`. Indeed, as
+`aligned_data`'s voxel indices along axis 0 should increase when
 moving to the right of the patient (rather than to their left like in
 `src_system`, which is "LPS"), and its indices along axis 1 should
 increase when moving to the patient's front (rather than their back),
@@ -320,13 +320,13 @@ print(voxel_index_of_world_origin)
 # [9. 9. 0.]
 ```
 We can easily check that the voxel data at the world coordinate origin
-remains the same in `aligned_volume` as in `src_volume`:
+remains the same in `aligned_data` as in `src_data`:
 ```python
 print(volume.src_volume[0, 0, 0] == volume.aligned_volume[9, 9, 0])
 # True
 ```
 This index shift is reflected in the translational part of
-`aligned_transformation` – in order to get from `aligned_volume`'s
+`aligned_transformation` – in order to get from `aligned_data`'s
 voxel indices to "RAS" world coordinates, we must subtract 9 in
 coordinate axis 0 and 1:
 ```python
@@ -345,7 +345,7 @@ transformation matrix may look hugely different.
 As `src_transformation` is an identity matrix and as both anatomical
 world coordinate systems have the same order of axes (first axis:
 left–right, second axis: anterior–posterior, third axis:
-superior–inferior) the mapping from `src_volume` to our choice of world
+superior–inferior) the mapping from `src_data` to our choice of world
 coordinate system, which is provided via
 `src_to_aligned_transformation`, *almost* remains an identity matrix as
 well. However, as the first two axes are flipped, we find a -1 rather
@@ -508,8 +508,8 @@ nrrd.save_volume(path, volume, src_order, src_system)
 Here, `path` is again the file path, and `volume` is the `Volume`
 instance to be saved. Additionally, `src_order` is a boolean that
 determines the order of the voxels to be saved: if `True`, voxels will
-be sorted as in `volume.src_volume`; if `False`, voxels will be sorted
-as in `volume.aligned_volume`.
+be sorted as in `volume.src_data`; if `False`, voxels will be sorted
+as in `volume.aligned_data`.
 
 Again, the NRRD function has an additional parameter for choosing the
 anatomical world coordinate system: if `src_system` is True, the

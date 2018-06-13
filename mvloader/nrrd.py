@@ -107,8 +107,8 @@ def save_volume(path, volume, src_order=True, src_system=True, kinds=None):
     volume : Volume
         The ``Volume`` instance containing the image data to be saved.
     src_order : bool, optional
-        If `True` (default), order the saved voxels as in ``src_volume``; if `False`, order the saved voxels as in
-        ``aligned_volume``. In any case, the correct transformation matrix will be chosen.
+        If `True` (default), order the saved voxels as in ``src_data``; if `False`, order the saved voxels as in
+        ``aligned_data``. In any case, the correct transformation matrix will be chosen.
     src_system : bool, optional
         If `True` (default), try to use ``volume``'s ``src_system`` as the anatomical world coordinate system for
         saving; if `False`, try to use ``volume``'s ``system`` instead. In either case, this works if the system is
@@ -120,17 +120,17 @@ def save_volume(path, volume, src_order=True, src_system=True, kinds=None):
         nothing is given (default), the "kinds" field will not be set. Note that all strings should either be "domain"
         or "space".
     """
-    if volume.aligned_volume.ndim > 3:
+    if volume.aligned_data.ndim > 3:
         raise RuntimeError("Currently, mvloader supports saving NRRD files with scalar data only!")
 
     system = volume.src_system if src_system else volume.system
     system = system if system in ["RAS", "LAS", "LPS"] else "RAS"
 
     if src_order:
-        data = volume.src_volume
+        data = volume.src_data
         transformation = volume.get_src_transformation(system)
     else:
-        data = volume.aligned_volume
+        data = volume.aligned_data
         transformation = volume.get_aligned_transformation(system)
 
     save_image(path, data=data, transformation=transformation, system=system, kinds=kinds)

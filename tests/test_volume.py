@@ -36,7 +36,7 @@ class TestCreateVolume(unittest.TestCase):
         self.assertEqual(v.system, "RAS")
 
         # Test correct storage of immediate inputs
-        np.testing.assert_array_equal(v.src_volume, self.data_array)
+        np.testing.assert_array_equal(v.src_data, self.data_array)
         np.testing.assert_array_equal(v.src_transformation, np.eye(4))
         self.assertEqual(v.src_system, "RAS")
 
@@ -44,7 +44,7 @@ class TestCreateVolume(unittest.TestCase):
         np.testing.assert_array_equal(v.src_spacing, np.ones(3))
         np.testing.assert_array_equal(v.src_to_aligned_transformation, np.eye(4))
 
-        np.testing.assert_array_equal(v.aligned_volume, self.data_array)
+        np.testing.assert_array_equal(v.aligned_data, self.data_array)
         np.testing.assert_array_equal(v.aligned_spacing, np.ones(3))
         np.testing.assert_array_equal(v.aligned_transformation, np.eye(4))
 
@@ -164,9 +164,9 @@ class TestCreateVolume(unittest.TestCase):
                    src_transformation=src_transformation,
                    src_system="RAS")
 
-        # As we have almost no rotation, src_volume and aligned_volume should still match
-        np.testing.assert_array_equal(v.src_volume, self.data_array)
-        np.testing.assert_array_equal(v.aligned_volume, self.data_array)
+        # As we have almost no rotation, src_data and aligned_data should still match
+        np.testing.assert_array_equal(v.src_data, self.data_array)
+        np.testing.assert_array_equal(v.aligned_data, self.data_array)
 
         # As both the arrays and coordinate systems match, aligned_transformation and src_to_aligned_transformation
         # should match src_transformation
@@ -187,11 +187,11 @@ class TestCreateVolume(unittest.TestCase):
 
         # Values in v should still be the same as the initially given ones
         np.testing.assert_array_equal(v.src_transformation, src_transformation)
-        np.testing.assert_array_equal(v.src_volume, src_voxel_data)
+        np.testing.assert_array_equal(v.src_data, src_voxel_data)
 
         # A quick sanity check should give us the same statistics for both volume representations
-        s = v.src_volume
-        a = v.aligned_volume
+        s = v.src_data
+        a = v.aligned_data
         np.testing.assert_array_almost_equal([np.mean(s), np.std(s)], [np.mean(a), np.std(a)])
 
         # Test if "get_src_transformation" and "get_aligned_transformation" do what they should
@@ -230,7 +230,7 @@ class TestLoadVolume(unittest.TestCase):
 
             self.assertEqual(v.system, "RAS", msg=alignment_triple)  # All volumes should be aligned to RAS by default
 
-            # Changing the assumed system to the same as `src_sytem` allows us to simply compare `aligned_volume` with
+            # Changing the assumed system to the same as `src_sytem` allows us to simply compare `aligned_data` with
             # the given `testdata_array` (and implicitly lets us check if changing coordinate systems works properly)
             v.system = self.src_systems[alignment_triple]
 
@@ -248,26 +248,26 @@ class TestLoadVolume(unittest.TestCase):
                 is_transformation = v.src_transformation[:3, :3] * (1 / np.linalg.norm(v.src_transformation[:3, :3], axis=0)[np.newaxis, :])
                 np.testing.assert_array_almost_equal(should_transformation, is_transformation, err_msg=alignment_triple)
 
-            # Check the actual array contents of src_volume and aligned_volume (should exactly match the src_testdata
+            # Check the actual array contents of src_data and aligned_data (should exactly match the src_testdata
             # and testdata arrays)
-            np.testing.assert_array_equal(self._src_testdata_arrays[alignment_triple], v.src_volume, err_msg=alignment_triple)
-            np.testing.assert_array_equal(self._testdata_array, v.aligned_volume, err_msg=alignment_triple)
+            np.testing.assert_array_equal(self._src_testdata_arrays[alignment_triple], v.src_data, err_msg=alignment_triple)
+            np.testing.assert_array_equal(self._testdata_array, v.aligned_data, err_msg=alignment_triple)
 
             # Check the value at the coordinate system origins: should be zero
             world_origin = np.asarray([0, 0, 0, 1])
             i_src = tuple(np.round(np.linalg.inv(v.src_transformation)[:3] @ world_origin).astype(np.int))
             i_aligned = tuple(np.round(np.linalg.inv(v.aligned_transformation)[:3] @ world_origin).astype(np.int))
 
-            self.assertEqual(self._testdata_array[0, 0, 0], v.src_volume[i_src], msg=alignment_triple)
-            self.assertEqual(self._testdata_array[0, 0, 0], v.aligned_volume[i_aligned], msg=alignment_triple)
+            self.assertEqual(self._testdata_array[0, 0, 0], v.src_data[i_src], msg=alignment_triple)
+            self.assertEqual(self._testdata_array[0, 0, 0], v.aligned_data[i_aligned], msg=alignment_triple)
 
-            # For all coordinates: Check if we can get from aligned_volume's voxel indices to src_volume's voxel
+            # For all coordinates: Check if we can get from aligned_data's voxel indices to src_data's voxel
             # indices (via aligned_transformation and src_to_aligned_transformation) and find the same values there.
             # I guess this completes our transformation checks.
-            aligned_indices = np.indices(v.aligned_volume.shape).reshape(v.aligned_volume.ndim, -1)
+            aligned_indices = np.indices(v.aligned_data.shape).reshape(v.aligned_data.ndim, -1)
             src_indices = (np.linalg.inv(v.src_to_aligned_transformation) @ v.aligned_transformation)[:3] @ np.r_[aligned_indices, np.ones((1, aligned_indices.shape[-1]))]
             src_indices = np.round(src_indices).astype(np.int)
-            np.testing.assert_array_equal(v.src_volume[tuple(src_indices)], v.aligned_volume[tuple(aligned_indices)], err_msg=alignment_triple)
+            np.testing.assert_array_equal(v.src_data[tuple(src_indices)], v.aligned_data[tuple(aligned_indices)], err_msg=alignment_triple)
 
     def _parse_name(self, testdata_filename):
 
@@ -350,11 +350,11 @@ class TestCopyVolume(TestLoadVolume):
                 # 2. Compare copy to original
 
                 # 2.1. Check if deep copies are deep and shallow copies are shallow
-                self.assertEqual(deep, is_deep_copy(v_src_copy.aligned_volume, v_src.aligned_volume), msg=err_msg)
+                self.assertEqual(deep, is_deep_copy(v_src_copy.aligned_data, v_src.aligned_data), msg=err_msg)
 
                 # 2.2. When aligned to the same user system, array contents, transformations, and spacings should match
                 v_src_copy.system = v_src.system
-                np.testing.assert_array_equal(v_src_copy.aligned_volume, v_src.aligned_volume, err_msg=err_msg)
+                np.testing.assert_array_equal(v_src_copy.aligned_data, v_src.aligned_data, err_msg=err_msg)
                 np.testing.assert_array_almost_equal(v_src_copy.aligned_spacing, v_src.aligned_spacing)
                 np.testing.assert_array_almost_equal(v_src_copy.aligned_transformation, v_src.aligned_transformation)
 

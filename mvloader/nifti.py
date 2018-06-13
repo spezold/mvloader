@@ -117,18 +117,18 @@ def save_volume(path, volume, src_order=True):
     volume : Volume
         The ``Volume`` instance containing the image data to be saved.
     src_order : bool, optional
-        If `True` (default), order the saved voxels as in ``src_volume``; if `False`, order the saved voxels as in
-        ``aligned_volume``. In any case, the correct transformation matrix will be chosen. Furthermore, the three
+        If `True` (default), order the saved voxels as in ``src_data``; if `False`, order the saved voxels as in
+        ``aligned_data``. In any case, the correct transformation matrix will be chosen. Furthermore, the three
         spatial dimensions, in accordance with the NIfTI-1 specification [1]_, will always end up in the first three
         axes of the saved volume.
     """
     system = "RAS"
 
     if src_order:
-        data = ac.pull_spatial_dimensions(volume.src_volume, volume.src_spatial_dimensions)
+        data = ac.pull_spatial_dimensions(volume.src_data, volume.src_spatial_dimensions)
         transformation = volume.get_src_transformation(system)
     else:
-        data = volume.aligned_volume  # Spatial dimensions already in front
+        data = volume.aligned_data  # Spatial dimensions already in front
         transformation = volume.get_aligned_transformation(system)
 
     save_image(path, data=data, transformation=transformation)
