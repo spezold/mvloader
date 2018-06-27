@@ -2,12 +2,12 @@
 # coding: utf-8
 
 """
-Making use of the Pydicom library [1]_, return correctly stacked and oriented DICOM volumes via ``volume.Volume``
+Making use of the Pydicom library [DICOM1]_, return correctly stacked and oriented DICOM volumes via ``volume.Volume``
 instances.
 
 References
 ----------
-.. [1] https://github.com/pydicom/pydicom (20180209)
+.. [DICOM1] https://github.com/pydicom/pydicom (20180209)
 """
 
 
@@ -49,7 +49,7 @@ def open_stack(path, verbose=True, sloppy=False):
 
     The given files need *not* be named according to their stacking order -- in fact, their names do not influence
     the stacking process. Instead, "Image Position (Patient)" (0020,0032) and "Image Orientation (Patient)" (0020,0037)
-    are evaluated for working out the stacking order. See e.g. [2]_ and [3]_ for the necessary steps.
+    are evaluated for working out the stacking order. See e.g. [DICOM2]_ and [DICOM3]_ for the necessary steps.
 
     Parameters
     ----------
@@ -75,8 +75,8 @@ def open_stack(path, verbose=True, sloppy=False):
 
     References
     ----------
-    .. [2] http://nipy.org/nibabel/dicom/dicom_orientation.html (20180209)
-    .. [3] https://itk.org/pipermail/insight-users/2003-September/004761.html (20180209)
+    .. [DICOM2] http://nipy.org/nibabel/dicom/dicom_orientation.html (20180209)
+    .. [DICOM3] https://itk.org/pipermail/insight-users/2003-September/004761.html (20180209)
     """
     if Path(path).resolve().is_file() and not is_dicom_file(path):
         # Handle case 2 (archive file)
@@ -184,12 +184,12 @@ class SliceStacker:
         If `False` (default), only search the current directory itself (see ``path``) for DICOM files; if `True`, also
         search its subdirectories.
     """
-    SI_UID_TAG = (0x0020, 0x000E)  # Series Instance UID
-    ORIENT_TAG = (0x0020, 0x0037)  # Image Orientation (Patient)
-    POS_TAG    = (0x0020, 0x0032)  # Image Position (Patient)
-    PX_SPC_TAG = (0x0028, 0x0030)  # Pixel Spacing
-    ROWS_TAG   = (0x0028, 0x0010)  # Rows
-    COLS_TAG   = (0x0028, 0x0011)  # Columns
+    SI_UID_TAG = (0x0020, 0x000E)  #: Series Instance UID
+    ORIENT_TAG = (0x0020, 0x0037)  #: Image Orientation (Patient)
+    POS_TAG    = (0x0020, 0x0032)  #: Image Position (Patient)
+    PX_SPC_TAG = (0x0028, 0x0030)  #: Pixel Spacing
+    ROWS_TAG   = (0x0028, 0x0010)  #: Rows
+    COLS_TAG   = (0x0028, 0x0011)  #: Columns
     
     def __init__(self, path, si_uid=None, sloppy=False, recursive=False):
 

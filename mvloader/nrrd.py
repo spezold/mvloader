@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-"""A module for reading NRRD files [1]_, basically a wrapper for calls on the pynrrd library [2]_.
+"""A module for reading NRRD files [NRRD1]_, basically a wrapper for calls on the pynrrd library [NRRD2]_.
 
 References
 ----------
-.. [1] http://teem.sourceforge.net/nrrd/format.html (20180212)
-.. [2] https://github.com/mhe/pynrrd (20180212).
+.. [NRRD1] http://teem.sourceforge.net/nrrd/format.html (20180212)
+.. [NRRD2] https://github.com/mhe/pynrrd (20180212).
 """
 
 import nrrd

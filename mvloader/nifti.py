@@ -2,13 +2,13 @@
 # coding: utf-8
 
 """
-A module for reading and writing NIfTI-1 files [1]_, basically a wrapper for calls
-on the Nibabel library [2]_.
+A module for reading and writing NIfTI-1 files [NIFTI1]_, basically a wrapper for calls
+on the Nibabel library [NIFTI2]_.
 
 References
 ----------
-.. [1] http://niftilib.sourceforge.net/c_api_html/nifti1_8h-source.html (20180212)
-.. [2] http://nipy.org/nibabel/ (20180212).
+.. [NIFTI1] http://niftilib.sourceforge.net/c_api_html/nifti1_8h-source.html (20180212)
+.. [NIFTI2] http://nipy.org/nibabel/ (20180212).
 """
 
 import gzip
@@ -119,7 +119,7 @@ def save_volume(path, volume, src_order=True):
     src_order : bool, optional
         If `True` (default), order the saved voxels as in ``src_data``; if `False`, order the saved voxels as in
         ``aligned_data``. In any case, the correct transformation matrix will be chosen. Furthermore, the three
-        spatial dimensions, in accordance with the NIfTI-1 specification [1]_, will always end up in the first three
+        spatial dimensions, in accordance with the NIfTI-1 specification [NIFTI1]_, will always end up in the first three
         axes of the saved volume.
     """
     system = "RAS"
