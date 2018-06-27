@@ -40,12 +40,14 @@ def open_stack(path, verbose=True, sloppy=False):
     Case 2 (``path`` points to an archive file)
         Temporarily extract it, then iterate over its contents (*recursively*) in alphanumeric order and try to combine
         all present DICOM files that share the "Series Instance UID" (0020,000E) with the first loadable DICOM file. The
-        file format is determined via trial and error, so this might not be the most efficient way.
+        archive's file format is determined via trial and error, so this might not be the most efficient way.
 
     Case 3 (``path`` points to a DICOM file)
         Iterate over the contents of the file's base directory (*non-recursively*) and try to combine all present DICOM
-        files that share the "Series Instance UID" with the given file. If ``sloppy`` is `True`, ignore the "Series
-        Instance UID" in both cases and try to combine all of the directory's DICOM files.
+        files that share the "Series Instance UID" with the given file.
+        
+    If ``sloppy`` is `True`, ignore the "Series Instance UID" in either case and try to combine all of the directory's
+    DICOM files.
 
     The given files need *not* be named according to their stacking order -- in fact, their names do not influence
     the stacking process. Instead, "Image Position (Patient)" (0020,0032) and "Image Orientation (Patient)" (0020,0037)
@@ -59,8 +61,8 @@ def open_stack(path, verbose=True, sloppy=False):
         If `True` (default), print some meta data of the loaded files to standard output.
     sloppy : bool, optional
         If `False` (default), the DICOM files' "Series Instance UID" (0020,000E) will be compared to find matching
-        slices and ignore others that are in the same directory; if `True`, this comparison will not be made and thus
-        files with different "Series Instance UID"s will potentially be stacked.
+        slices and ignore others; if `True`, this comparison will not be made and thus files with different "Series
+        Instance UID"s will potentially be stacked.
 
     Returns
     -------
