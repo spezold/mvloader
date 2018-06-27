@@ -86,9 +86,7 @@ class Volume:
     @property
     def system(self):
         """
-        Returns
-        -------
-        str
+        str:
             The desired anatomical world coordinate system as a three-character string. Any permutation of {A,P}, {I,S},
             {L,R} (case-insensitive) can be used. When being set, fields like ``aligned_data``, ``aligned_spacing``,
             ``aligned_transformation``, and ``src_to_aligned_transformation`` will be adjusted accordingly.
@@ -145,9 +143,7 @@ class Volume:
     @property
     def src_system(self):
         """
-        Returns
-        -------
-        str
+        str:
             The original anatomical world coordinate system as a three-character string.
         """
         return self.__src_system
@@ -155,9 +151,7 @@ class Volume:
     @property
     def src_spatial_dimensions(self):
         """
-        Returns
-        -------
-        tuple
+        tuple:
             In ascending order , the three axes that contain spatial dimensions in ``src_data``.
         """
         return self.__src_spatial_dimensions
@@ -165,9 +159,7 @@ class Volume:
     @property
     def src_object(self):
         """
-        Returns
-        -------
-        object
+        object:
             The object that originally was returned by the image loading library (or None).
         """
         return self.__src_object
@@ -175,9 +167,7 @@ class Volume:
     @property
     def src_transformation(self):
         """
-        Returns
-        -------
-        numpy.ndarray
+        numpy.ndarray:
             The :math:`4×4` transformation matrix that maps from ``src_data``'s voxel indices to the *original*
             anatomical world coordinate system ``src_system`` (new copy).
         """
@@ -186,9 +176,7 @@ class Volume:
     @property
     def aligned_transformation(self):
         """
-        Returns
-        -------
-        numpy.ndarray
+        numpy.ndarray:
             The :math:`4×4` transformation matrix that maps from ``aligned_data``'s voxel indices to the *desired*
             anatomical world coordinate system ``system`` (new copy).
         """
@@ -197,9 +185,7 @@ class Volume:
     @property
     def src_to_aligned_transformation(self):
         """
-        Returns
-        -------
-        numpy.ndarray
+        numpy.ndarray:
             The :math:`4×4` transformation matrix that maps from ``src_data``'s voxel indices to the *desired*
             anatomical world coordinate system ``system`` (new copy).
         """
@@ -208,9 +194,7 @@ class Volume:
     @property
     def src_data(self):
         """
-        Returns
-        -------
-        numpy.ndarray
+        numpy.ndarray:
             The :math:`N`-dimensional Numpy array (:math:`N≥3`) that contains the original voxel data.
         """
         return self.__src_data
@@ -218,9 +202,7 @@ class Volume:
     @property
     def src_volume(self):
         """
-        Returns
-        -------
-        numpy.ndarray
+        numpy.ndarray:
             Alias for ``src_data`` to maintain backward compatibility.
         """
         return self.__src_data
@@ -228,9 +210,7 @@ class Volume:
     @property
     def aligned_data(self):
         """
-        Returns
-        -------
-        numpy.ndarray
+        numpy.ndarray:
             The :math:`N`-dimensional Numpy array (:math:`N≥3`) that contains the image information with the voxel data
             axes aligned to the desired anatomical world coordinate system ``system`` as closely as is possible without
             reinterpolation. The three spatial dimensions are brought to the front (i.e. axes 0, 1, 2), the remaining
@@ -245,9 +225,7 @@ class Volume:
     @property
     def aligned_volume(self):
         """
-        Returns
-        -------
-        numpy.ndarray
+        numpy.ndarray:
             Alias for ``aligned_data`` to maintain backward compatibility.
         """
         return self.__aligned_data
@@ -255,9 +233,7 @@ class Volume:
     @property
     def src_spacing(self):
         """
-        Returns
-        -------
-        tuple
+        tuple:
             The spacing of ``src_data`` as a three-tuple in world coordinate system units per voxel.
         """
         return self.__src_spacing
@@ -265,9 +241,7 @@ class Volume:
     @property
     def aligned_spacing(self):
         """
-        Returns
-        -------
-        tuple
+        tuple:
             The spacing of ``aligned_data`` as a three-tuple in world coordinate system units per voxel.
         """
         return self.__aligned_spacing
