@@ -175,7 +175,7 @@ def pull_spatial_dimensions(a, spatial_dimensions, sort=True, copy=False):
     Returns
     -------
     numpy.ndarray
-        A :math:`d`-dimensional array with the spatial dimensions along the first :math:`d` axes. The order of the
+        An :math:`N`-dimensional array with the spatial dimensions along the first :math:`d` axes. The order of the
         remaining axes is unchanged.
     """
     a = a.copy() if copy else a
@@ -206,7 +206,7 @@ def push_spatial_dimensions(a, spatial_dimensions, sort=True, copy=False):
     Returns
     -------
     numpy.ndarray
-        A :math:`d`-dimensional array with the :math:`d` spatial dimensions along their original axes. The order of the
+        An :math:`N`-dimensional array with the :math:`d` spatial dimensions along their original axes. The order of the
         remaining axes is unchanged.
     """
     a = a.copy() if copy else a
@@ -224,10 +224,10 @@ def swap(a, perm, spatial_dimensions, copy=False):
     a : array_like
         The :math:`N`-dimensional array (:math:`N≥d`) whose values are to be swapped.
     perm : array_like
-        A :math:`d×d` matrix that gives the permutations and reflections for swapping. If more values are given than
-        implied by the length of ``spatial_dimensions``, then the upper left :math:`d×d` area is considered. The given
-        array should represent a permutation-reflection matrix that maps the coordinate axes of one coordinate system
-        exactly onto the axes of another coordinate system.
+        A :math:`d×d` matrix that gives the permutations and reflections for swapping. If more than :math:`d×d` values
+        are given, where :math:`d` is implied by the length of ``spatial_dimensions``, then the upper left :math:`d×d`
+        area is considered. The given array should represent a permutation-reflection matrix that maps the coordinate
+        axes of one coordinate system exactly onto the axes of another coordinate system.
     spatial_dimensions: sequence of int
         The :math:`d` spatial dimensions of the array. The order of the given values is ignored, as the mapping order
         from one coordinate system to the other should be handled exclusively by the given ``perm`` matrix.
@@ -237,7 +237,7 @@ def swap(a, perm, spatial_dimensions, copy=False):
     Returns
     -------
     numpy.ndarray
-        The :math:`d`-dimensional array that results from swapping. All axes except for the swapped spatial dimensions
+        The :math:`N`-dimensional array that results from swapping. All axes except for the swapped spatial dimensions
         remain in their original positions.
     """
     a = a.copy() if copy else a
