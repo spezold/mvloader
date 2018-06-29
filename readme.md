@@ -525,6 +525,13 @@ For more options, see the documentation of the respective `save_*`
 functions.
 
 
+Acknowledgments
+---------------
+
+A big thank you to [Simon Andermatt](https://github.com/zubata88/) for
+initiating and contributing to the support of vector-valued images.
+
+
 History
 -------
 
