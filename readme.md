@@ -8,6 +8,18 @@ It is also meant to simplify dealing with their different anatomical
 world coordinate systems.
 
 
+Table of Contents
+-----------------
+
+* [Installing MVloader](#installing-mvloader)
+* [Motivation: Voxel Indices, World Coordinates, and Patient Anatomy](#motivation-voxel-indices-world-coordinates-and-patient-anatomy)
+* [The Volume Class](#the-volume-class)
+* [Loading Images](#loading-images)
+* [Saving Images](#saving-images)
+* [Acknowledgments](#acknowledgments)
+* [History](#history)
+
+
 Installing MVloader
 -------------------
 
