@@ -57,7 +57,7 @@ def open_image(path, verbose=True, squeeze=False):
     except Exception as e:
         raise IOError(e)
 
-    voxel_data = np.array(src_object.get_data())
+    voxel_data = src_object.get_data()
     hdr = src_object.header
 
     ndim = hdr["dim"][0]
