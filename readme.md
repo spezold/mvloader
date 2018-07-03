@@ -547,6 +547,13 @@ initiating and contributing to the support of vector-valued images.
 History
 -------
 
+### (2018-07-03)
+
+When NIfTI files are loaded and Nibabel returns a `memmap` rather than a
+plain `ndarray`, we keep that now for both `Volume.src_data` and
+`Volume.aligned_data`. Thanks again to
+[Simon Andermatt](https://github.com/zubata88/)!
+
 ### (2018-06-13)
 
 Rename `Volume.src_volume` to `Volume.src_data` and
