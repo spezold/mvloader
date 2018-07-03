@@ -271,7 +271,7 @@ class TestLoadVolume(unittest.TestCase):
 
     def _parse_name(self, testdata_filename):
 
-        name = str(Path(testdata_filename).name).replace(".nii.gz", "").replace(".nrrd", "")
+        name = str(Path(testdata_filename).name).replace(".nii.gz", "").replace(".nii", "").replace(".nrrd", "")
         coord_triples, voxel_size = name.split("-")
         if "2" not in coord_triples:
             alignment_triple = coord_triples

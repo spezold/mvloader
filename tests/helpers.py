@@ -195,14 +195,14 @@ def generate_test_data():
          [0.0, 0.0, 0.0, 1.0]]
     to_nifti(t, file)
     # Source data aligned with SLP anatomical coordinates
-    file = testdata_dir / "SLP-0.9x0.8x0.5.nii.gz"
+    file = testdata_dir / "SLP-0.9x0.8x0.5.nii"
     t = [[0.0, -0.8,  0.0, 0.8 * max_i[0]],
          [0.0,  0.0, -0.5, 0.5 * max_i[1]],
          [0.9,  0.0,  0.0, 0.0 * max_i[2]],
          [0.0,  0.0,  0.0, 1.0]]
     to_nifti(t, file)
     # Source data aligned with IPL anatomical coordinates
-    file = testdata_dir / "IPL-3.0x9.0x0.1.nii.gz"
+    file = testdata_dir / "IPL-3.0x9.0x0.1.nii"
     t = [[ 0.0,  0.0, -0.1, 0.1 * max_i[0]],
          [ 0.0, -9.0,  0.0, 9.0 * max_i[1]],
          [-3.0,  0.0,  0.0, 3.0 * max_i[2]],
