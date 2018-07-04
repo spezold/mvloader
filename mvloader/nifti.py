@@ -57,7 +57,11 @@ def open_image(path, verbose=True, squeeze=False):
     except Exception as e:
         raise IOError(e)
 
-    voxel_data = src_object.get_data()
+    # Make sure that no changes happen to data on disk
+    voxel_data = np.asanyarray(src_object.dataobj)
+    # Make sure that no changes happen to data on disk
+    if isinstance(voxel_data, np.memmap):
+        voxel_data.mode = "c"
     hdr = src_object.header
 
     ndim = hdr["dim"][0]

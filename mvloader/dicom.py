@@ -25,6 +25,11 @@ import zipfile
 from mvloader.volume import Volume
 
 
+# TODO: for archives, do not write them back to disk but use "file-like objects" instead, as is done in
+# TODO: https://github.com/rhaxton/contrib-pydicom/blob/master/input-output/dicom_zip_reader.py
+# TODO: (pydicom can actually handle these in the place of file paths)
+
+
 def open_stack(path, verbose=True, sloppy=False):
     """
     Open a list of two-dimensional DICOM files at the specified path and build their three-dimensional volume
