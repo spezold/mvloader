@@ -22,7 +22,7 @@ from mvloader.volume import Volume
 
 def open_image(path, verbose=True, squeeze=False):
     """
-    Open a NIfTI-1 image at the given path. The image might have an arbitray number of dimensions; however, its first
+    Open a NIfTI-1 image at the given path. The image might have an arbitrary number of dimensions; however, its first
     three axes are assumed to hold its spatial dimensions.
 
     Parameters
