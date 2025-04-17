@@ -43,10 +43,9 @@ def permutation_matrix(src, dst):  # TODO: test cases
     dst_pos = pos(dst)
 
     ndim = 3
-    dtype = np.int
 
     # Actually build the transformation matrix
-    mat = np.zeros((ndim, ndim), dtype=dtype)
+    mat = np.zeros((ndim, ndim), dtype=int)
     for i in range(ndim):
         # If the character for the current axis is not the same in the source and destination string, we have to mirror
         # the respective axis (-1), otherwise not (1)
@@ -71,9 +70,9 @@ def find_closest_permutation_matrix(trans):
     numpy.ndarray
         The resulting :math:`d×d` permutation-reflection matrix (containing only integers 0, 1, and -1).
     """
-    trans_abs = ma.masked_array(remove_scaling(np.abs(trans)), mask=(np.zeros_like(trans, dtype=np.bool)))
+    trans_abs = ma.masked_array(remove_scaling(np.abs(trans)), mask=(np.zeros_like(trans, dtype=bool)))
 
-    perm = np.zeros(trans_abs.shape, dtype=np.int)
+    perm = np.zeros(trans_abs.shape, dtype=int)
     # Set the maxima to ±1, keeping track of rows/columns already set to avoid collisions
     while np.sum(~trans_abs.mask) > 0:
         ij_argmax = np.unravel_index(trans_abs.argmax(), trans_abs.shape)
@@ -148,7 +147,7 @@ def offset(perm, shape):
     max_indices = np.asarray(shape) - 1
     # Swap if the sign of the respective column's nonzero element is negative -> add offset there
     offset_vector = must_be_flipped(perm[:ndim, :ndim]) * (-max_indices)
-    offset_matrix = np.eye(ndim + 1, dtype=np.int)
+    offset_matrix = np.eye(ndim + 1, dtype=int)
     offset_matrix[:-1, -1] = offset_vector
     return offset_matrix
 
@@ -255,7 +254,7 @@ def swap(a, perm, spatial_dimensions, copy=False):
 
     # Permute first ndim axes
     permutations = np.arange(a.ndim)
-    permutations[:ndim] = (np.abs(perm) @ np.arange(ndim)).astype(np.int)
+    permutations[:ndim] = (np.abs(perm) @ np.arange(ndim)).astype(int)
     a = np.transpose(a, axes=permutations)
 
     # Push ndim spatial dimensions back to their original axes and return
